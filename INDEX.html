@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encore After Party - Digital Entry Pass</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Montserrat:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            --accentA: #ff00ff;
+            --accentB: #00ffff;
+            --surface: rgba(20, 0, 40, 0.82);
+            --surfaceStrong: rgba(20, 0, 40, 0.95);
+            --text: #ffffff;
+            --muted: rgba(255, 255, 255, 0.72);
+            --borderA: rgba(255, 0, 255, 0.65);
+            --borderB: rgba(0, 255, 255, 0.65);
+            --shadowA: rgba(255, 0, 255, 0.35);
+            --shadowB: rgba(0, 255, 255, 0.25);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body.no-scroll {
+            overflow: hidden !important;
+            height: 100vh;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://r2imghtlak.mmtcdn.com/r2-mmt-htl-image/htl-imgs/202011141605077991-cb5c80547dff11ed874b0a58a9feac02.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            z-index: -2;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(75, 0, 130, 0.85), rgba(0, 0, 0, 0.9));
+            z-index: -1;
+        }
+
+        .auth-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            background: radial-gradient(1200px 600px at 20% 10%, rgba(255, 0, 255, 0.20), transparent 60%),
+                radial-gradient(1200px 600px at 80% 90%, rgba(0, 255, 255, 0.14), transparent 60%),
+                rgba(0, 0, 0, 0.70);
+            backdrop-filter: blur(8px);
+        }
+
+        .auth-overlay[hidden] {
+            display: none;
+        }
+
+        .auth-card {
+            width: min(560px, 100%);
+            background: rgba(10, 0, 25, 0.78);
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: 22px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55),
+                0 0 60px rgba(255, 0, 255, 0.18),
+                0 0 60px rgba(0, 255, 255, 0.12);
+            overflow: hidden;
+        }
+
+        .auth-card::before {
+            content: '';
+            display: block;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accentA), var(--accentB), var(--accentA));
+            opacity: 0.9;
+        }
+
+        .auth-header {
+            padding: 26px 26px 12px;
+            text-align: center;
+        }
+
+        .auth-kicker {
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        .auth-title {
+            margin-top: 10px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 2.2rem;
+            letter-spacing: 6px;
+            background: linear-gradient(45deg, var(--accentA), var(--accentB));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+        }
+
+        .auth-subtitle {
+            margin-top: 10px;
+            color: var(--muted);
+            font-size: 0.98rem;
+            line-height: 1.4;
+        }
+
+        .auth-body {
+            padding: 18px 26px 26px;
+        }
+
+        .auth-grid {
+            display: grid;
+            gap: 14px;
+        }
+
+        .input-row {
+            display: grid;
+            gap: 10px;
+        }
+
+        .input-row label {
+            color: rgba(255, 255, 255, 0.86);
+            font-weight: 600;
+            letter-spacing: 1.2px;
+            font-size: 0.95rem;
+        }
+
+        .input-row input {
+            width: 100%;
+            padding: 14px 14px;
+            background: rgba(0, 0, 0, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.08s ease;
+        }
+
+        .input-row input:focus {
+            outline: none;
+            border-color: rgba(0, 255, 255, 0.65);
+            box-shadow: 0 0 0 4px rgba(0, 255, 255, 0.12);
+        }
+
+        .auth-actions {
+            margin-top: 14px;
+            display: grid;
+            gap: 12px;
+        }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            color: rgba(255, 255, 255, 0.82);
+            font-size: 0.95rem;
+        }
+
+        .toggle-row label {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .toggle-row input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accentB);
+        }
+
+        .auth-error {
+            display: none;
+            padding: 12px 14px;
+            background: rgba(255, 0, 80, 0.10);
+            border: 1px solid rgba(255, 0, 80, 0.35);
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.92);
+            line-height: 1.35;
+            font-size: 0.95rem;
+        }
+
+        .auth-error.active {
+            display: block;
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 14px;
+            background: linear-gradient(45deg, var(--accentA), var(--accentB));
+            color: #05000e;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+        }
+
+        .auth-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 16px 45px rgba(0, 0, 0, 0.45),
+                0 0 35px rgba(255, 0, 255, 0.25),
+                0 0 35px rgba(0, 255, 255, 0.20);
+        }
+
+        .auth-btn:disabled {
+            opacity: 0.72;
+            cursor: not-allowed;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .logo-section {
+            text-align: center;
+            margin-bottom: 50px;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        .logo-section img {
+            max-width: 180px;
+            height: auto;
+            filter: drop-shadow(0 0 20px rgba(138, 43, 226, 0.8));
+        }
+
+        .main-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 900;
+            text-align: center;
+            background: linear-gradient(45deg, #ff00ff, #00ffff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+            letter-spacing: 8px;
+            margin: 30px 0;
+            animation: neonGlow 2s ease-in-out infinite alternate;
+            text-shadow: 0 0 30px rgba(255, 0, 255, 0.5);
+        }
+
+        .subtitle {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            text-align: center;
+            color: #00ffff;
+            letter-spacing: 4px;
+            margin-bottom: 50px;
+            text-transform: uppercase;
+        }
+
+        .countdown-section {
+            background: var(--surface);
+            border: 2px solid var(--accentA);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 0 40px var(--shadowA);
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .countdown-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            color: #00ffff;
+            text-align: center;
+            margin-bottom: 30px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        .countdown-timer {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            text-align: center;
+        }
+
+        .countdown-item {
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #00ffff;
+            border-radius: 15px;
+            padding: 20px 10px;
+        }
+
+        .countdown-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            font-weight: 900;
+            color: #ff00ff;
+            display: block;
+            line-height: 1;
+        }
+
+        .countdown-label {
+            font-size: 0.9rem;
+            color: #00ffff;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 10px;
+            display: block;
+        }
+
+        .event-details {
+            background: var(--surface);
+            border: 2px solid var(--accentA);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 0 40px var(--shadowA);
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            margin: 25px 0;
+            font-size: 1.2rem;
+            color: #fff;
+        }
+
+        .detail-icon {
+            font-size: 2rem;
+            margin-right: 20px;
+            color: #00ffff;
+        }
+
+        .detail-label {
+            font-weight: 700;
+            color: #ff00ff;
+            margin-right: 15px;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .form-section {
+            background: var(--surface);
+            border: 2px solid var(--accentB);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 0 40px var(--shadowB);
+            animation: fadeInUp 1.2s ease-out;
+        }
+
+        .form-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            color: #00ffff;
+            text-align: center;
+            margin-bottom: 30px;
+            letter-spacing: 4px;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-group label {
+            display: block;
+            color: rgba(255, 255, 255, 0.88);
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1rem;
+            font-family: 'Montserrat', sans-serif;
+            transition: all 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: rgba(0, 255, 255, 0.65);
+            box-shadow: 0 0 0 4px rgba(0, 255, 255, 0.12);
+        }
+
+        .activate-btn {
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(45deg, #ff00ff, #00ffff);
+            border: none;
+            border-radius: 15px;
+            color: #000;
+            font-size: 1.5rem;
+            font-weight: 900;
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 3px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            margin-top: 20px;
+        }
+
+        .activate-btn:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 0 40px rgba(255, 0, 255, 0.8);
+        }
+
+        .activate-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .rules-section {
+            background: var(--surface);
+            border: 2px solid var(--accentA);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 40px;
+            animation: fadeInUp 1.4s ease-out;
+        }
+
+        .rules-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            color: #ff00ff;
+            margin-bottom: 25px;
+            letter-spacing: 4px;
+        }
+
+        .rule-item {
+            color: #fff;
+            font-size: 1.1rem;
+            margin: 15px 0;
+            padding-left: 40px;
+            position: relative;
+        }
+
+        .rule-item::before {
+            position: absolute;
+            left: 0;
+            font-size: 1.3rem;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 40px;
+            animation: fadeInUp 1.6s ease-out;
+        }
+
+        .action-btn {
+            padding: 25px;
+            border-radius: 15px;
+            text-decoration: none;
+            text-align: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            transition: all 0.3s;
+            border: 2px solid;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .maps-btn {
+            background: rgba(234, 67, 53, 0.2);
+            border-color: #EA4335;
+            color: #EA4335;
+        }
+
+        .maps-btn:hover {
+            background: rgba(234, 67, 53, 0.4);
+            box-shadow: 0 0 30px rgba(234, 67, 53, 0.6);
+            transform: translateY(-5px);
+        }
+
+        .whatsapp-btn {
+            background: rgba(37, 211, 102, 0.2);
+            border-color: #25D366;
+            color: #25D366;
+        }
+
+        .whatsapp-btn:hover {
+            background: rgba(37, 211, 102, 0.4);
+            box-shadow: 0 0 30px rgba(37, 211, 102, 0.6);
+            transform: translateY(-5px);
+        }
+
+        .verified-screen {
+            display: none;
+            background: var(--surfaceStrong);
+            border: 3px solid #00ff00;
+            border-radius: 20px;
+            padding: 60px;
+            text-align: center;
+            box-shadow: 0 0 60px rgba(0, 255, 0, 0.6);
+            animation: fadeInScale 0.5s ease-out;
+        }
+
+        .verified-actions {
+            display: grid;
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .secondary-btn {
+            padding: 14px 16px;
+            border-radius: 14px;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            color: rgba(255, 255, 255, 0.92);
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.2s ease;
+        }
+
+        .secondary-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 16px 45px rgba(0, 0, 0, 0.35);
+        }
+
+        .verified-screen.active {
+            display: block;
+        }
+
+        .verified-icon {
+            font-size: 6rem;
+            color: #00ff00;
+            margin-bottom: 20px;
+        }
+
+        .verified-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            color: #00ff00;
+            margin-bottom: 20px;
+            letter-spacing: 6px;
+        }
+
+        .verified-text {
+            font-size: 1.3rem;
+            color: #fff;
+            margin: 15px 0;
+        }
+
+        .verified-id {
+            background: rgba(0, 255, 0, 0.1);
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 30px 0;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            color: #00ff00;
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #ff00ff;
+            position: absolute;
+            animation: confettiFall 3s linear;
+        }
+
+        @keyframes confettiFall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        @keyframes neonGlow {
+            from {
+                text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 30px #ff00ff;
+            }
+
+            to {
+                text-shadow: 0 0 20px #ff00ff, 0 0 30px #ff00ff, 0 0 40px #ff00ff, 0 0 50px #00ffff;
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-title {
+                font-size: 2rem;
+                letter-spacing: 4px;
+            }
+
+            .countdown-timer {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .countdown-value {
+                font-size: 2rem;
+            }
+
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .event-details,
+            .form-section,
+            .rules-section,
+            .countdown-section {
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Login Overlay -->
+    <div id="loginOverlay"
+        style="position:fixed; top:0; left:0; width:100%; height:100%; background: linear-gradient(135deg, rgba(20, 0, 40, 0.95), rgba(75, 0, 130, 0.95)); z-index:9999; display:flex; flex-direction:column; justify-content:center; align-items:center; backdrop-filter: blur(10px); transition: opacity 0.5s ease;">
+        <div
+            style="background: rgba(0,0,0,0.6); padding: 40px; border-radius: 20px; border: 2px solid #ff00ff; box-shadow: 0 0 40px rgba(255,0,255,0.4); text-align: center; max-width: 400px; width: 90%;">
+            <h2 style="font-family: 'Orbitron', sans-serif; color: #00ffff; margin-bottom: 20px; letter-spacing: 2px;">
+                🔒 VIP ACCESS ONLY</h2>
+            <p style="color: #fff; margin-bottom: 25px; line-height: 1.5;">Enter the Secret Invite Code to view the
+                Encore Pass</p>
+            <div style="position: relative; margin-bottom: 15px;">
+                <input type="password" id="secretCode"
+                    style="width: 100%; padding: 15px; border-radius: 10px; border: 2px solid #00ffff; background: rgba(0,0,0,0.5); color: #fff; font-size: 1.1rem; outline: none; transition: all 0.3s; font-family: 'Montserrat', sans-serif;"
+                    placeholder="Secret Code...">
+            </div>
+            <div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 25px;">
+                <input type="checkbox" id="showPassword"
+                    style="margin-right: 10px; width: 18px; height: 18px; accent-color: #ff00ff; cursor: pointer;">
+                <label for="showPassword"
+                    style="color: #00ffff; font-size: 0.95rem; cursor: pointer; font-weight: 600;">Show Password</label>
+            </div>
+            <button id="unlockBtn"
+                style="width: 100%; padding: 15px; background: linear-gradient(45deg, #ff00ff, #00ffff); border: none; border-radius: 10px; color: #000; font-weight: 900; font-size: 1.2rem; cursor: pointer; font-family: 'Orbitron', sans-serif; text-transform: uppercase; transition: all 0.3s; letter-spacing: 3px;">UNLOCK</button>
+            <p id="loginError"
+                style="color: #ff4444; margin-top: 15px; display: none; font-weight: bold; text-shadow: 0 0 10px rgba(255,0,0,0.5);">
+                ❌ Access Denied. Incorrect Code.</p>
+        </div>
+    </div>
+    <div class="container">
+        <div class="logo-section">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRhYPmlRahOzpAPJtgMhzGeIxZHOYfcHAzE1w&s"
+                alt="Seth M.R. Jaipuria School">
+        </div>
+
+        <h1 class="main-title">ENCORE</h1>
+        <p class="subtitle">After Party - Class of 2025-26</p>
+
+        <div class="countdown-section">
+            <h2 class="countdown-title">⏳ Event Countdown</h2>
+            <div class="countdown-timer">
+                <div class="countdown-item">
+                    <span class="countdown-value" id="days">00</span>
+                    <span class="countdown-label">Days</span>
+                </div>
+                <div class="countdown-item">
+                    <span class="countdown-value" id="hours">00</span>
+                    <span class="countdown-label">Hours</span>
+                </div>
+                <div class="countdown-item">
+                    <span class="countdown-value" id="minutes">00</span>
+                    <span class="countdown-label">Minutes</span>
+                </div>
+                <div class="countdown-item">
+                    <span class="countdown-value" id="seconds">00</span>
+                    <span class="countdown-label">Seconds</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="event-details">
+            <div class="detail-item">
+                <span class="detail-icon">📅</span>
+                <span class="detail-label">DATE:</span>
+                <span id="eventDateText">1st February 2026</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-icon">⏰</span>
+                <span class="detail-label">TIME:</span>
+                <span id="eventTimeText">5:00 PM Onwards</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-icon">📍</span>
+                <span class="detail-label">VENUE:</span>
+                <span id="eventVenueText">Saras Elysium, 2nd Floor<br>The Grand Arc Hotel & Convention Centre</span>
+            </div>
+        </div>
+
+        <div class="form-section" id="formSection">
+            <h2 class="form-title">ACTIVATE YOUR PASS</h2>
+            <form id="entryForm">
+                <div class="input-group">
+                    <label for="userId">UNIQUE USER ID</label>
+                    <input type="text" id="userId" name="userId" required placeholder="Enter your ID">
+                </div>
+                <div class="input-group">
+                    <label for="fullName">FULL NAME</label>
+                    <input type="text" id="fullName" name="fullName" required placeholder="Enter your full name">
+                </div>
+                <button type="submit" class="activate-btn" id="submitBtn">ACTIVATE PASS</button>
+            </form>
+        </div>
+
+        <div class="verified-screen" id="verifiedScreen">
+            <div class="verified-icon">✓</div>
+            <h2 class="verified-title">ACCESS GRANTED</h2>
+            <p class="verified-text">Your digital entry pass has been successfully verified.</p>
+            <div class="verified-id" id="displayInfo"></div>
+            <p class="verified-text">Your VIP PDF Pass will automatically download in a moment.</p>
+            <button id="downloadPdfBtn" class="activate-btn"
+                style="width: auto; padding: 15px 30px; font-size: 1.1rem; margin-top: 20px; display: inline-block;">
+                📥 DOWNLOAD PASS AGAIN
+            </button>
+            <p class="verified-text" style="color: #00ffff; margin-top: 30px;">See you at Saras Elysium!</p>
+        </div>
+
+        <!-- Hidden PDF template (kept off-screen but rendered so PDF is not blank) -->
+        <div id="pdfTemplateWrapper" style="position:absolute; left:-9999px; top:-9999px; visibility:hidden;">
+            <div id="pdfCard"
+                style="width: 800px; height: 500px; background: #0b001a; position: relative; padding: 40px; color: #fff; font-family: 'Montserrat', sans-serif; border: 4px solid #ff00ff; box-sizing: border-box; overflow: hidden;">
+                <!-- Neon gradient background -->
+                <div
+                    style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(75, 0, 130, 0.4), rgba(0, 0, 0, 1)); z-index: 0;">
+                </div>
+                <!-- Decorative elements -->
+                <div
+                    style="position: absolute; top: -50px; left: -50px; width: 250px; height: 250px; background: #ff00ff; filter: blur(100px); opacity: 0.6; z-index: 0;">
+                </div>
+                <div
+                    style="position: absolute; bottom: -50px; right: -50px; width: 250px; height: 250px; background: #00ffff; filter: blur(100px); opacity: 0.6; z-index: 0;">
+                </div>
+
+                <!-- Content -->
+                <div
+                    style="position: relative; z-index: 1; text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <h1
+                            style="font-family: 'Orbitron', sans-serif; font-size: 48px; color: #fff; text-transform: uppercase; letter-spacing: 8px; margin: 0; text-shadow: 0 0 15px #ff00ff;">
+                            ENCORE</h1>
+                        <p
+                            style="font-family: 'Orbitron', sans-serif; font-size: 18px; color: #00ffff; letter-spacing: 4px; margin-top: 5px;">
+                            AFTER PARTY 2026</p>
+                    </div>
+
+                    <div
+                        style="background: rgba(20,0,40,0.6); border: 2px solid #00ffff; border-radius: 15px; padding: 30px; margin: 20px 40px; box-shadow: 0 0 20px rgba(0,255,255,0.2);">
+                        <h2
+                            style="color: #ff00ff; font-family: 'Orbitron', sans-serif; font-size: 22px; margin-bottom: 25px; letter-spacing: 3px;">
+                            OFFICIAL VIP PASS</h2>
+                        <div style="display: flex; justify-content: space-between; text-align: left; padding: 0 20px;">
+                            <div style="flex: 1;">
+                                <p style="font-size: 11px; color: #00ffff; letter-spacing: 2px; margin-bottom: 5px;">
+                                    GUEST NAME</p>
+                                <p id="pdfName"
+                                    style="font-size: 22px; font-weight: bold; margin-bottom: 20px; text-transform: uppercase;">
+                                    JOHN DOE</p>
+
+                                <p style="font-size: 11px; color: #00ffff; letter-spacing: 2px; margin-bottom: 5px;">
+                                    DATE &amp; TIME</p>
+                                <p id="pdfDateTime" style="font-size: 16px; font-weight: bold;">1st Feb 2026 | 5:00 PM</p>
+                            </div>
+                            <div style="flex: 1; text-align: right;">
+                                <p style="font-size: 11px; color: #00ffff; letter-spacing: 2px; margin-bottom: 5px;">
+                                    UNIQUE ID</p>
+                                <p id="pdfId"
+                                    style="font-size: 24px; font-weight: bold; margin-bottom: 20px; font-family: 'Orbitron', sans-serif; color: #ff00ff;">
+                                    #12345</p>
+
+                                <p style="font-size: 11px; color: #00ffff; letter-spacing: 2px; margin-bottom: 5px;">
+                                    VENUE</p>
+                                <p id="pdfVenue" style="font-size: 14px; font-weight: bold;">Saras Elysium, 2nd Floor<br>The Grand Arc
+                                    Hotel</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div style="margin-top: 10px; margin-bottom: 10px;">
+                            <span
+                                style="display: inline-block; padding: 5px 20px; border: 1px solid #ff00ff; border-radius: 20px; font-size: 12px; color: #ff00ff; background: rgba(255,0,255,0.1); margin: 0 10px;">INVITED
+                                GUEST</span>
+                            <span
+                                style="display: inline-block; padding: 5px 20px; border: 1px solid #00ffff; border-radius: 20px; font-size: 12px; color: #00ffff; background: rgba(0,255,255,0.1); margin: 0 10px;">VIP
+                                ACCESS ONLY</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="rules-section">
+            <h2 class="rules-title">EVENT RULES</h2>
+            <div class="rule-item" style="--emoji: '🎟️'">🎟️ Entry only after verification</div>
+            <div class="rule-item" style="--emoji: '🔒'">🔒 Invite-only event</div>
+            <div class="rule-item" style="--emoji: '👗'">👗 Party wear / semi-formal only</div>
+            <div class="rule-item" style="--emoji: '🏨'">🏨 Respect the venue</div>
+            <div class="rule-item" style="--emoji: '😎'">😎 Good vibes only</div>
+            <div class="rule-item" style="--emoji: '🎧'">🎧 Organizer's decision is final</div>
+        </div>
+
+        <div class="action-buttons">
+            <a href="https://maps.app.goo.gl/Pdtvn7YvNHhg8qbX7" target="_blank" class="action-btn maps-btn">
+                <span>📍</span>
+                <span>VENUE LOCATION</span>
+            </a>
+            <a href="https://wa.me/917007520015" target="_blank" class="action-btn whatsapp-btn">
+                <span>💬</span>
+                <span>CONTACT ORGANIZER</span>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Password Protection Logic
+        const MY_PASSWORD = "ENCORE2026";
+        const loginOverlay = document.getElementById('loginOverlay');
+        const secretCodeInput = document.getElementById('secretCode');
+        const showPasswordCheckbox = document.getElementById('showPassword');
+        const unlockBtn = document.getElementById('unlockBtn');
+        const loginError = document.getElementById('loginError');
+
+        document.body.classList.add('no-scroll');
+
+        showPasswordCheckbox.addEventListener('change', function () {
+            secretCodeInput.type = this.checked ? 'text' : 'password';
+        });
+
+        function attemptUnlock() {
+            if (secretCodeInput.value === MY_PASSWORD) {
+                loginOverlay.style.opacity = '0';
+                setTimeout(() => {
+                    loginOverlay.style.display = 'none';
+                    document.body.classList.remove('no-scroll');
+                }, 500);
+            } else {
+                loginError.style.display = 'block';
+                secretCodeInput.style.borderColor = '#ff4444';
+                secretCodeInput.value = '';
+                setTimeout(() => {
+                    secretCodeInput.style.borderColor = '#00ffff';
+                }, 2000);
+            }
+        }
+
+        unlockBtn.addEventListener('click', attemptUnlock);
+        secretCodeInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') attemptUnlock();
+        });
+
+        // Form Submit and PDF Generation
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyPMcvNbwuS1_oVZk94HF84oIbxn_xh2d70b1lINcq26sHIVHJEfV-tJwDP13229YAN/exec";
+
+        // Minimal invitation card PDF using jsPDF (creative blocks layout)
+        function downloadInvitationPDF(userId, fullName) {
+            const { jsPDF } = window.jspdf;
+            const safeName = (fullName || "").trim() || "Guest";
+            const safeId = (userId || "").trim() || "—";
+
+            const dateText = document.getElementById('eventDateText')?.textContent || '1st February 2026';
+            const timeText = document.getElementById('eventTimeText')?.textContent || '5:00 PM Onwards';
+            const venueNode = document.getElementById('eventVenueText');
+            const venueText = venueNode
+                ? venueNode.textContent.replace(/\s+/g, " ").trim()
+                : 'Saras Elysium, 2nd Floor • The Grand Arc Hotel & Convention Centre';
+
+            // Landscape A5 for a card-like feel
+            const doc = new jsPDF({ orientation: "l", unit: "pt", format: "a5" });
+            const pageW = doc.internal.pageSize.getWidth();
+            const pageH = doc.internal.pageSize.getHeight();
+
+            // Full background with subtle vignette
+            doc.setFillColor(7, 0, 30);
+            doc.rect(0, 0, pageW, pageH, "F");
+
+            // Glow strips
+            doc.setFillColor(255, 0, 255);
+            doc.rect(0, 0, pageW, 6, "F");
+            doc.setFillColor(0, 255, 255);
+            doc.rect(0, pageH - 6, pageW, 6, "F");
+
+            // Inner card container
+            const cardMarginX = 28;
+            const cardMarginY = 24;
+            const cardW = pageW - cardMarginX * 2;
+            const cardH = pageH - cardMarginY * 2;
+
+            doc.setFillColor(12, 0, 45);
+            doc.roundedRect(cardMarginX, cardMarginY, cardW, cardH, 16, 16, "F");
+            doc.setDrawColor(255, 0, 255);
+            doc.setLineWidth(1.3);
+            doc.roundedRect(cardMarginX, cardMarginY, cardW, cardH, 16, 16, "S");
+
+            // Header
+            const centerX = pageW / 2;
+            let y = cardMarginY + 40;
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(28);
+            doc.setTextColor(255, 255, 255);
+            doc.text("ENCORE", centerX, y, { align: "center" });
+
+            y += 20;
+            doc.setFontSize(11);
+            doc.setTextColor(0, 255, 255);
+            doc.text("AFTER PARTY • CLASS OF 2025–26", centerX, y, { align: "center" });
+
+            // --------------------------
+            // Guest block (full-width)
+            // --------------------------
+            const blockMarginX = cardMarginX + 32;
+            y += 26;
+
+            const guestBlockY = y;
+            const guestBlockH = 70;
+            const guestBlockW = cardW - 64;
+
+            doc.setFillColor(18, 0, 65);
+            doc.roundedRect(blockMarginX, guestBlockY, guestBlockW, guestBlockH, 12, 12, "F");
+            doc.setDrawColor(0, 255, 255);
+            doc.setLineWidth(0.9);
+            doc.roundedRect(blockMarginX, guestBlockY, guestBlockW, guestBlockH, 12, 12, "S");
+
+            // Name label + value
+            let innerX = blockMarginX + 18;
+            let innerY = guestBlockY + 24;
+            doc.setFontSize(9.5);
+            doc.setTextColor(0, 255, 255);
+            doc.text("GUEST NAME", innerX, innerY);
+            doc.setFontSize(17);
+            doc.setTextColor(255, 255, 255);
+            doc.text(safeName.toUpperCase(), innerX, innerY + 20, { maxWidth: guestBlockW - 36 });
+
+            // ID label + value aligned to right inside block
+            const idX = blockMarginX + guestBlockW - 18;
+            doc.setFontSize(9.5);
+            doc.setTextColor(0, 255, 255);
+            doc.text("UNIQUE ID", idX, innerY, { align: "right" });
+            doc.setFontSize(14);
+            doc.setTextColor(255, 0, 255);
+            doc.text("#" + safeId, idX, innerY + 20, { align: "right" });
+
+            // --------------------------
+            // Bottom row: Date/Time block + Venue block
+            // --------------------------
+            const rowY = guestBlockY + guestBlockH + 26;
+            const rowH = 86;
+            const gap = 18;
+            const halfW = (guestBlockW - gap) / 2;
+
+            // Date & time block
+            const dateX = blockMarginX;
+            doc.setFillColor(15, 0, 55);
+            doc.roundedRect(dateX, rowY, halfW, rowH, 12, 12, "F");
+            doc.setDrawColor(0, 255, 255);
+            doc.setLineWidth(0.9);
+            doc.roundedRect(dateX, rowY, halfW, rowH, 12, 12, "S");
+
+            innerX = dateX + 16;
+            innerY = rowY + 24;
+            doc.setFontSize(9.5);
+            doc.setTextColor(0, 255, 255);
+            doc.text("DATE & TIME", innerX, innerY);
+            doc.setFontSize(12);
+            doc.setTextColor(255, 255, 255);
+            doc.text(dateText, innerX, innerY + 16);
+            doc.text(timeText, innerX, innerY + 32);
+
+            // Venue block
+            const venueX = dateX + halfW + gap;
+            doc.setFillColor(15, 0, 55);
+            doc.roundedRect(venueX, rowY, halfW, rowH, 12, 12, "F");
+            doc.setDrawColor(255, 0, 255);
+            doc.setLineWidth(0.9);
+            doc.roundedRect(venueX, rowY, halfW, rowH, 12, 12, "S");
+
+            innerX = venueX + 16;
+            innerY = rowY + 24;
+            doc.setFontSize(9.5);
+            doc.setTextColor(255, 0, 255);
+            doc.text("VENUE", innerX, innerY);
+            doc.setFontSize(11);
+            doc.setTextColor(255, 255, 255);
+            const wrappedVenue = doc.splitTextToSize(venueText, halfW - 26);
+            doc.text(wrappedVenue, innerX, innerY + 16);
+
+            // Bottom chips
+            const chipY = cardMarginY + cardH - 26;
+            doc.setFontSize(9);
+
+            doc.setDrawColor(255, 0, 255);
+            doc.setTextColor(255, 0, 255);
+            doc.roundedRect(cardMarginX + 40, chipY - 14, 90, 22, 10, 10, "S");
+            doc.text("INVITED GUEST", cardMarginX + 85, chipY, { align: "center" });
+
+            doc.setDrawColor(0, 255, 255);
+            doc.setTextColor(0, 255, 255);
+            const chip2X = cardMarginX + 40 + 110;
+            doc.roundedRect(chip2X, chipY - 14, 110, 22, 10, 10, "S");
+            doc.text("VIP ACCESS ONLY", chip2X + 55, chipY, { align: "center" });
+
+            // Footer note
+            doc.setFontSize(8.5);
+            doc.setTextColor(155, 155, 175);
+            doc.text("Please carry this digital invitation for entry • Invite-only", centerX, pageH - 18, { align: "center" });
+
+            const filename = `Encore_VIP_Pass_${safeName.replace(/\s+/g, "_")}.pdf`;
+            doc.save(filename);
+        }
+
+        // Countdown Timer
+        function updateCountdown() {
+            const eventDate = new Date("February 1, 2026 17:00:00").getTime();
+            const now = new Date().getTime();
+            const distance = eventDate - now;
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            document.getElementById("days").textContent = String(days).padStart(2, '0');
+            document.getElementById("hours").textContent = String(hours).padStart(2, '0');
+            document.getElementById("minutes").textContent = String(minutes).padStart(2, '0');
+            document.getElementById("seconds").textContent = String(seconds).padStart(2, '0');
+
+            if (distance < 0) {
+                document.querySelector(".countdown-title").textContent = "🎉 EVENT IS LIVE!";
+                document.getElementById("days").textContent = "00";
+                document.getElementById("hours").textContent = "00";
+                document.getElementById("minutes").textContent = "00";
+                document.getElementById("seconds").textContent = "00";
+            }
+        }
+
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+
+        function createConfetti() {
+            const colors = ["#ff00ff", "#00ffff", "#ff0080", "#00ff80", "#ffff00"];
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement("div");
+                confetti.className = "confetti";
+                confetti.style.left = Math.random() * 100 + "vw";
+                confetti.style.animationDelay = Math.random() * 3 + "s";
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.width = Math.random() * 10 + 5 + "px";
+                confetti.style.height = Math.random() * 10 + 5 + "px";
+                document.body.appendChild(confetti);
+
+                setTimeout(function () {
+                    confetti.remove();
+                }, 3000);
+            }
+        }
+
+        window.addEventListener("load", createConfetti);
+
+        // Download again button
+        document.getElementById("downloadPdfBtn").addEventListener("click", function () {
+            const userId = document.getElementById("userId")?.value || "";
+            const fullName = document.getElementById("fullName")?.value || "";
+            downloadInvitationPDF(String(userId).trim(), String(fullName).trim());
+        });
+
+        document.getElementById("entryForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const userId = document.getElementById("userId").value.trim();
+            const fullName = document.getElementById("fullName").value.trim();
+            const submitBtn = document.getElementById("submitBtn");
+
+            if (!userId || !fullName) {
+                alert("Please fill in all fields!");
+                return;
+            }
+
+            submitBtn.textContent = "PROCESSING...";
+            submitBtn.disabled = true;
+
+            const formData = new FormData();
+            formData.append("userId", userId);
+            formData.append("fullName", fullName);
+
+            fetch(SCRIPT_URL, {
+                method: "POST",
+                body: formData,
+                mode: "no-cors"
+            })
+                .then(function () {
+                    console.log("Form submitted successfully");
+
+                    document.getElementById("formSection").style.display = "none";
+                    document.getElementById("verifiedScreen").classList.add("active");
+                    document.getElementById("displayInfo").innerHTML =
+                        "<strong>ID:</strong> " + userId + "<br><strong>NAME:</strong> " + fullName;
+
+                    createConfetti();
+
+                    // Trigger PDF download based on credentials + party details
+                    setTimeout(() => {
+                        downloadInvitationPDF(userId, fullName);
+                    }, 800);
+
+                    document.getElementById('downloadPdfBtn').onclick = () => {
+                        downloadInvitationPDF(userId, fullName);
+                    };
+
+                    setTimeout(function () {
+                        document.getElementById("verifiedScreen").scrollIntoView({ behavior: "smooth" });
+                    }, 100);
+
+                })
+                .catch(function (error) {
+                    console.error("Error:", error);
+                    alert("Submission failed. Please check your internet connection and try again.");
+                    submitBtn.textContent = "ACTIVATE PASS";
+                    submitBtn.disabled = false;
+                });
+        });
+    </script>
+</body>
+
+</html>
