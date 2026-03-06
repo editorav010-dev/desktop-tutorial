@@ -1,1201 +1,482 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Encore After Party - Digital Entry Pass</title>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Montserrat:wght@300;400;600;700&display=swap"
-        rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
-    <style>
-        :root {
-            --accentA: #ff00ff;
-            --accentB: #00ffff;
-            --surface: rgba(20, 0, 40, 0.82);
-            --surfaceStrong: rgba(20, 0, 40, 0.95);
-            --text: #ffffff;
-            --muted: rgba(255, 255, 255, 0.72);
-            --borderA: rgba(255, 0, 255, 0.65);
-            --borderB: rgba(0, 255, 255, 0.65);
-            --shadowA: rgba(255, 0, 255, 0.35);
-            --shadowB: rgba(0, 255, 255, 0.25);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body.no-scroll {
-            overflow: hidden !important;
-            height: 100vh;
-        }
-
-        body {
-            font-family: 'Montserrat', sans-serif;
-            min-height: 100vh;
-            position: relative;
-            overflow-x: hidden;
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url('https://r2imghtlak.mmtcdn.com/r2-mmt-htl-image/htl-imgs/202011141605077991-cb5c80547dff11ed874b0a58a9feac02.jpg');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-            z-index: -2;
-        }
-
-        body::after {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, rgba(75, 0, 130, 0.85), rgba(0, 0, 0, 0.9));
-            z-index: -1;
-        }
-
-        .auth-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 9999;
-            display: grid;
-            place-items: center;
-            padding: 24px;
-            background: radial-gradient(1200px 600px at 20% 10%, rgba(255, 0, 255, 0.20), transparent 60%),
-                radial-gradient(1200px 600px at 80% 90%, rgba(0, 255, 255, 0.14), transparent 60%),
-                rgba(0, 0, 0, 0.70);
-            backdrop-filter: blur(8px);
-        }
-
-        .auth-overlay[hidden] {
-            display: none;
-        }
-
-        .auth-card {
-            width: min(560px, 100%);
-            background: rgba(10, 0, 25, 0.78);
-            border: 1px solid rgba(255, 255, 255, 0.10);
-            border-radius: 22px;
-            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55),
-                0 0 60px rgba(255, 0, 255, 0.18),
-                0 0 60px rgba(0, 255, 255, 0.12);
-            overflow: hidden;
-        }
-
-        .auth-card::before {
-            content: '';
-            display: block;
-            height: 3px;
-            background: linear-gradient(90deg, var(--accentA), var(--accentB), var(--accentA));
-            opacity: 0.9;
-        }
-
-        .auth-header {
-            padding: 26px 26px 12px;
-            text-align: center;
-        }
-
-        .auth-kicker {
-            font-family: 'Orbitron', sans-serif;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            font-size: 0.85rem;
-            color: var(--muted);
-        }
-
-        .auth-title {
-            margin-top: 10px;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 900;
-            font-size: 2.2rem;
-            letter-spacing: 6px;
-            background: linear-gradient(45deg, var(--accentA), var(--accentB));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-transform: uppercase;
-        }
-
-        .auth-subtitle {
-            margin-top: 10px;
-            color: var(--muted);
-            font-size: 0.98rem;
-            line-height: 1.4;
-        }
-
-        .auth-body {
-            padding: 18px 26px 26px;
-        }
-
-        .auth-grid {
-            display: grid;
-            gap: 14px;
-        }
-
-        .input-row {
-            display: grid;
-            gap: 10px;
-        }
-
-        .input-row label {
-            color: rgba(255, 255, 255, 0.86);
-            font-weight: 600;
-            letter-spacing: 1.2px;
-            font-size: 0.95rem;
-        }
-
-        .input-row input {
-            width: 100%;
-            padding: 14px 14px;
-            background: rgba(0, 0, 0, 0.45);
-            border: 1px solid rgba(255, 255, 255, 0.16);
-            border-radius: 12px;
-            color: #fff;
-            font-size: 1rem;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.08s ease;
-        }
-
-        .input-row input:focus {
-            outline: none;
-            border-color: rgba(0, 255, 255, 0.65);
-            box-shadow: 0 0 0 4px rgba(0, 255, 255, 0.12);
-        }
-
-        .auth-actions {
-            margin-top: 14px;
-            display: grid;
-            gap: 12px;
-        }
-
-        .toggle-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            color: rgba(255, 255, 255, 0.82);
-            font-size: 0.95rem;
-        }
-
-        .toggle-row label {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .toggle-row input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            accent-color: var(--accentB);
-        }
-
-        .auth-error {
-            display: none;
-            padding: 12px 14px;
-            background: rgba(255, 0, 80, 0.10);
-            border: 1px solid rgba(255, 0, 80, 0.35);
-            border-radius: 12px;
-            color: rgba(255, 255, 255, 0.92);
-            line-height: 1.35;
-            font-size: 0.95rem;
-        }
-
-        .auth-error.active {
-            display: block;
-        }
-
-        .auth-btn {
-            width: 100%;
-            padding: 16px;
-            border: none;
-            border-radius: 14px;
-            background: linear-gradient(45deg, var(--accentA), var(--accentB));
-            color: #05000e;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 900;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
-        }
-
-        .auth-btn:hover:not(:disabled) {
-            transform: translateY(-1px);
-            box-shadow: 0 16px 45px rgba(0, 0, 0, 0.45),
-                0 0 35px rgba(255, 0, 255, 0.25),
-                0 0 35px rgba(0, 255, 255, 0.20);
-        }
-
-        .auth-btn:disabled {
-            opacity: 0.72;
-            cursor: not-allowed;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 40px 20px;
-        }
-
-        .logo-section {
-            text-align: center;
-            margin-bottom: 50px;
-            animation: fadeInDown 1s ease-out;
-        }
-
-        .logo-section img {
-            max-width: 180px;
-            height: auto;
-            filter: drop-shadow(0 0 20px rgba(138, 43, 226, 0.8));
-        }
-
-        .main-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 3.5rem;
-            font-weight: 900;
-            text-align: center;
-            background: linear-gradient(45deg, #ff00ff, #00ffff, #ff00ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-transform: uppercase;
-            letter-spacing: 8px;
-            margin: 30px 0;
-            animation: neonGlow 2s ease-in-out infinite alternate;
-            text-shadow: 0 0 30px rgba(255, 0, 255, 0.5);
-        }
-
-        .subtitle {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.2rem;
-            text-align: center;
-            color: #00ffff;
-            letter-spacing: 4px;
-            margin-bottom: 50px;
-            text-transform: uppercase;
-        }
-
-        .countdown-section {
-            background: var(--surface);
-            border: 2px solid var(--accentA);
-            border-radius: 20px;
-            padding: 40px;
-            margin-bottom: 40px;
-            box-shadow: 0 0 40px var(--shadowA);
-            animation: fadeInUp 0.8s ease-out;
-        }
-
-        .countdown-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.5rem;
-            color: #00ffff;
-            text-align: center;
-            margin-bottom: 30px;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-        }
-
-        .countdown-timer {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            text-align: center;
-        }
-
-        .countdown-item {
-            background: rgba(0, 0, 0, 0.5);
-            border: 2px solid #00ffff;
-            border-radius: 15px;
-            padding: 20px 10px;
-        }
-
-        .countdown-value {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 3rem;
-            font-weight: 900;
-            color: #ff00ff;
-            display: block;
-            line-height: 1;
-        }
-
-        .countdown-label {
-            font-size: 0.9rem;
-            color: #00ffff;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-top: 10px;
-            display: block;
-        }
-
-        .event-details {
-            background: var(--surface);
-            border: 2px solid var(--accentA);
-            border-radius: 20px;
-            padding: 40px;
-            margin-bottom: 40px;
-            box-shadow: 0 0 40px var(--shadowA);
-            animation: fadeInUp 1s ease-out;
-        }
-
-        .detail-item {
-            display: flex;
-            align-items: center;
-            margin: 25px 0;
-            font-size: 1.2rem;
-            color: #fff;
-        }
-
-        .detail-icon {
-            font-size: 2rem;
-            margin-right: 20px;
-            color: #00ffff;
-        }
-
-        .detail-label {
-            font-weight: 700;
-            color: #ff00ff;
-            margin-right: 15px;
-            font-family: 'Orbitron', sans-serif;
-        }
-
-        .form-section {
-            background: var(--surface);
-            border: 2px solid var(--accentB);
-            border-radius: 20px;
-            padding: 40px;
-            margin-bottom: 40px;
-            box-shadow: 0 0 40px var(--shadowB);
-            animation: fadeInUp 1.2s ease-out;
-        }
-
-        .form-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2rem;
-            color: #00ffff;
-            text-align: center;
-            margin-bottom: 30px;
-            letter-spacing: 4px;
-        }
-
-        .input-group {
-            margin-bottom: 25px;
-        }
-
-        .input-group label {
-            display: block;
-            color: rgba(255, 255, 255, 0.88);
-            font-weight: 600;
-            margin-bottom: 10px;
-            font-size: 1.1rem;
-            letter-spacing: 2px;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 15px 20px;
-            background: rgba(0, 0, 0, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            border-radius: 10px;
-            color: #fff;
-            font-size: 1rem;
-            font-family: 'Montserrat', sans-serif;
-            transition: all 0.3s;
-        }
-
-        .input-group input:focus {
-            outline: none;
-            border-color: rgba(0, 255, 255, 0.65);
-            box-shadow: 0 0 0 4px rgba(0, 255, 255, 0.12);
-        }
-
-        .activate-btn {
-            width: 100%;
-            padding: 20px;
-            background: linear-gradient(45deg, #ff00ff, #00ffff);
-            border: none;
-            border-radius: 15px;
-            color: #000;
-            font-size: 1.5rem;
-            font-weight: 900;
-            font-family: 'Orbitron', sans-serif;
-            letter-spacing: 3px;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-transform: uppercase;
-            margin-top: 20px;
-        }
-
-        .activate-btn:hover:not(:disabled) {
-            transform: scale(1.05);
-            box-shadow: 0 0 40px rgba(255, 0, 255, 0.8);
-        }
-
-        .activate-btn:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-
-        .rules-section {
-            background: var(--surface);
-            border: 2px solid var(--accentA);
-            border-radius: 20px;
-            padding: 40px;
-            margin-bottom: 40px;
-            animation: fadeInUp 1.4s ease-out;
-        }
-
-        .rules-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2rem;
-            color: #ff00ff;
-            margin-bottom: 25px;
-            letter-spacing: 4px;
-        }
-
-        .rule-item {
-            color: #fff;
-            font-size: 1.1rem;
-            margin: 15px 0;
-            padding-left: 40px;
-            position: relative;
-        }
-
-        .rule-item::before {
-            position: absolute;
-            left: 0;
-            font-size: 1.3rem;
-        }
-
-        .action-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin-top: 40px;
-            animation: fadeInUp 1.6s ease-out;
-        }
-
-        .action-btn {
-            padding: 25px;
-            border-radius: 15px;
-            text-decoration: none;
-            text-align: center;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.2rem;
-            font-weight: 700;
-            letter-spacing: 2px;
-            transition: all 0.3s;
-            border: 2px solid;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-        }
-
-        .maps-btn {
-            background: rgba(234, 67, 53, 0.2);
-            border-color: #EA4335;
-            color: #EA4335;
-        }
-
-        .maps-btn:hover {
-            background: rgba(234, 67, 53, 0.4);
-            box-shadow: 0 0 30px rgba(234, 67, 53, 0.6);
-            transform: translateY(-5px);
-        }
-
-        .whatsapp-btn {
-            background: rgba(37, 211, 102, 0.2);
-            border-color: #25D366;
-            color: #25D366;
-        }
-
-        .whatsapp-btn:hover {
-            background: rgba(37, 211, 102, 0.4);
-            box-shadow: 0 0 30px rgba(37, 211, 102, 0.6);
-            transform: translateY(-5px);
-        }
-
-        .verified-screen {
-            display: none;
-            background: var(--surfaceStrong);
-            border: 3px solid #00ff00;
-            border-radius: 20px;
-            padding: 60px;
-            text-align: center;
-            box-shadow: 0 0 60px rgba(0, 255, 0, 0.6);
-            animation: fadeInScale 0.5s ease-out;
-        }
-
-        .verified-actions {
-            display: grid;
-            gap: 12px;
-            margin-top: 18px;
-        }
-
-        .secondary-btn {
-            padding: 14px 16px;
-            border-radius: 14px;
-            background: rgba(0, 0, 0, 0.35);
-            border: 1px solid rgba(255, 255, 255, 0.16);
-            color: rgba(255, 255, 255, 0.92);
-            font-family: 'Orbitron', sans-serif;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: transform 0.15s ease, box-shadow 0.2s ease;
-        }
-
-        .secondary-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 16px 45px rgba(0, 0, 0, 0.35);
-        }
-
-        .verified-screen.active {
-            display: block;
-        }
-
-        .verified-icon {
-            font-size: 6rem;
-            color: #00ff00;
-            margin-bottom: 20px;
-        }
-
-        .verified-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 3rem;
-            color: #00ff00;
-            margin-bottom: 20px;
-            letter-spacing: 6px;
-        }
-
-        .verified-text {
-            font-size: 1.3rem;
-            color: #fff;
-            margin: 15px 0;
-        }
-
-        .verified-id {
-            background: rgba(0, 255, 0, 0.1);
-            border: 2px solid #00ff00;
-            border-radius: 10px;
-            padding: 20px;
-            margin: 30px 0;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.5rem;
-            color: #00ff00;
-        }
-
-        .confetti {
-            position: fixed;
-            width: 10px;
-            height: 10px;
-            background: #ff00ff;
-            position: absolute;
-            animation: confettiFall 3s linear;
-        }
-
-        @keyframes confettiFall {
-            to {
-                transform: translateY(100vh) rotate(360deg);
-                opacity: 0;
-            }
-        }
-
-        @keyframes neonGlow {
-            from {
-                text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 30px #ff00ff;
-            }
-
-            to {
-                text-shadow: 0 0 20px #ff00ff, 0 0 30px #ff00ff, 0 0 40px #ff00ff, 0 0 50px #00ffff;
-            }
-        }
-
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-50px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(50px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeInScale {
-            from {
-                opacity: 0;
-                transform: scale(0.8);
-            }
-
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .main-title {
-                font-size: 2rem;
-                letter-spacing: 4px;
-            }
-
-            .countdown-timer {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .countdown-value {
-                font-size: 2rem;
-            }
-
-            .action-buttons {
-                grid-template-columns: 1fr;
-            }
-
-            .event-details,
-            .form-section,
-            .rules-section,
-            .countdown-section {
-                padding: 25px;
-            }
-        }
-    </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Yoga XII — MCQ Test</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{background:#080808;color:#E0E0E0;font-family:'Courier New',monospace;min-height:100vh}
+  /* INTRO */
+  #intro{display:flex;flex-direction:column;align-items:center;padding:24px 16px 60px}
+  .intro-card{background:#0E0E0E;border:1px solid #222;border-radius:16px;padding:36px 24px;text-align:center;width:100%;max-width:520px}
+  .emoji{font-size:52px;margin-bottom:10px}
+  .intro-title{font-size:26px;font-weight:bold;color:#fff;letter-spacing:-1px;margin-bottom:4px}
+  .intro-sub{font-size:12px;color:#555;letter-spacing:3px;text-transform:uppercase;margin-bottom:28px}
+  .filter-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:28px}
+  .filter-btn{padding:8px 16px;border-radius:20px;border:1px solid #333;background:transparent;color:#666;font-size:13px;cursor:pointer;font-family:'Courier New',monospace;transition:all .2s}
+  .filter-btn.active-u0{border-color:#00E5FF;background:rgba(0,229,255,.12);color:#00E5FF}
+  .filter-btn.active-u1{border-color:#00E5FF;background:rgba(0,229,255,.12);color:#00E5FF}
+  .filter-btn.active-u2{border-color:#FFD740;background:rgba(255,215,64,.12);color:#FFD740}
+  .filter-btn.active-u3{border-color:#69FF47;background:rgba(105,255,71,.12);color:#69FF47}
+  .info-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:28px}
+  .info-box{background:#141414;border:1px solid #222;border-radius:10px;padding:14px 8px;text-align:center}
+  .info-num{font-size:26px;font-weight:bold;color:#00E5FF}
+  .info-num.yellow{color:#FFD740}.info-num.green{color:#69FF47}
+  .info-lbl{font-size:10px;color:#555;text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+  .hint-txt{font-size:12px;color:#444;margin-bottom:24px;line-height:1.9}
+  .start-btn{background:#00E5FF;color:#000;border:none;border-radius:10px;padding:14px 48px;font-size:15px;font-weight:bold;cursor:pointer;letter-spacing:2px;text-transform:uppercase;font-family:'Courier New',monospace;width:100%}
+
+  /* TEST */
+  #test{display:none;flex-direction:column;min-height:100vh}
+  .topbar{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:#0A0A0A;border-bottom:1px solid #181818;position:sticky;top:0;z-index:99}
+  .logo-sm{font-size:11px;color:#444;letter-spacing:2px;text-transform:uppercase}
+  .timer{font-size:20px;font-weight:bold;font-family:'Courier New',monospace;letter-spacing:2px;padding:4px 12px;border-radius:6px;border:1px solid #69FF47;color:#69FF47;transition:all .5s}
+  .timer.warn{border-color:#FFD740;color:#FFD740}
+  .timer.danger{border-color:#FF5252;color:#FF5252}
+  .test-body{padding:14px 16px 80px;flex:1}
+  .progress-bar{width:100%;height:3px;background:#1a1a1a;border-radius:2px;margin-bottom:16px;overflow:hidden}
+  .progress-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,#00E5FF,#69FF47);transition:width .4s ease}
+  .q-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .unit-tag{font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:3px 10px;border-radius:20px;border:1px solid}
+  .unit-tag.u1{color:#00E5FF;border-color:rgba(0,229,255,.35);background:rgba(0,229,255,.1)}
+  .unit-tag.u2{color:#FFD740;border-color:rgba(255,215,64,.35);background:rgba(255,215,64,.1)}
+  .unit-tag.u3{color:#69FF47;border-color:rgba(105,255,71,.35);background:rgba(105,255,71,.1)}
+  .q-num{font-size:11px;color:#444}
+  .q-text{font-size:16px;line-height:1.6;color:#F0F0F0;background:#0E0E0E;border:1px solid #1E1E1E;border-radius:10px;padding:18px 16px;margin-bottom:18px;font-family:'Courier New',monospace}
+  .opt{display:flex;align-items:center;gap:12px;padding:13px 15px;margin-bottom:10px;border-radius:10px;background:#0E0E0E;border:1px solid #1E1E1E;cursor:pointer;transition:all .18s;font-size:14px;line-height:1.4;color:#CCC;-webkit-user-select:none;user-select:none}
+  .opt:active{opacity:.8}
+  .opt.selected{background:rgba(0,229,255,.1);border-color:rgba(0,229,255,.6);color:#00E5FF}
+  .opt.selected.u2{background:rgba(255,215,64,.1);border-color:rgba(255,215,64,.6);color:#FFD740}
+  .opt.selected.u3{background:rgba(105,255,71,.1);border-color:rgba(105,255,71,.6);color:#69FF47}
+  .opt.correct{background:rgba(105,255,71,.1);border-color:#69FF47;color:#69FF47}
+  .opt.wrong{background:rgba(255,82,82,.1);border-color:#FF5252;color:#FF5252}
+  .opt.dimmed{color:#333;border-color:#141414;background:#0A0A0A}
+  .opt-label{min-width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:12px;background:#1A1A1A;color:#555;transition:all .18s;flex-shrink:0}
+  .opt.selected .opt-label{background:#00E5FF;color:#000}
+  .opt.selected.u2 .opt-label{background:#FFD740;color:#000}
+  .opt.selected.u3 .opt-label{background:#69FF47;color:#000}
+  .opt.correct .opt-label{background:#69FF47;color:#000}
+  .opt.wrong .opt-label{background:#FF5252;color:#fff}
+  .opt.dimmed .opt-label{background:#111;color:#333}
+  .feedback{padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:13px}
+  .feedback.correct{background:rgba(105,255,71,.08);border:1px solid #69FF47;color:#69FF47}
+  .feedback.wrong{background:rgba(255,82,82,.08);border:1px solid #FF5252;color:#FF5252}
+  .nav-row{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:4px}
+  .nav-btn{padding:11px 20px;border-radius:8px;font-size:13px;cursor:pointer;border:1px solid #2A2A2A;background:transparent;color:#888;font-family:'Courier New',monospace;transition:all .2s}
+  .nav-btn:disabled{color:#333;border-color:#1A1A1A;cursor:not-allowed}
+  .confirm-btn{padding:11px 28px;border-radius:8px;font-size:13px;font-weight:bold;cursor:pointer;background:#00E5FF;color:#000;border:none;font-family:'Courier New',monospace;letter-spacing:1px;transition:all .2s;flex:1}
+  .confirm-btn.u2{background:#FFD740}.confirm-btn.u3{background:#69FF47}
+  .confirm-btn:disabled{background:#1A1A1A;color:#333;cursor:not-allowed}
+  .next-btn{padding:11px 24px;border-radius:8px;font-size:13px;font-weight:bold;cursor:pointer;background:#1E1E1E;color:#E0E0E0;border:1px solid #333;font-family:'Courier New',monospace;letter-spacing:1px;flex:1}
+  .dots-wrap{margin-top:18px}
+  .dots-label{font-size:10px;color:#333;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
+  .dots{display:flex;flex-wrap:wrap;gap:5px}
+  .dot{width:24px;height:24px;border-radius:5px;background:#141414;cursor:pointer;font-size:9px;display:flex;align-items:center;justify-content:center;color:#555;font-weight:bold;border:2px solid transparent;transition:all .2s}
+  .dot.current{border-color:#00E5FF;color:#00E5FF}
+  .dot.correct{background:#69FF47;color:#000}
+  .dot.wrong{background:#FF5252;color:#fff}
+  .dot-legend{display:flex;gap:12px;margin-top:8px;font-size:10px;color:#333}
+
+  /* RESULT */
+  #result{display:none;flex-direction:column;align-items:center;padding:20px 16px 60px}
+  .result-card{background:#0E0E0E;border:1px solid #222;border-radius:16px;padding:32px 20px;width:100%;max-width:520px}
+  .result-top{text-align:center;margin-bottom:24px}
+  .result-label{font-size:10px;color:#444;letter-spacing:3px;text-transform:uppercase;margin-bottom:14px}
+  .score-circle{width:130px;height:130px;border-radius:50%;margin:0 auto 16px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:4px solid #69FF47;background:rgba(0,0,0,.5)}
+  .score-circle.avg{border-color:#FFD740}.score-circle.low{border-color:#FF5252}
+  .score-pct{font-size:34px;font-weight:bold;color:#fff;line-height:1}
+  .score-grade{font-size:18px;margin-top:4px}
+  .score-msg{font-size:15px;color:#CCC;margin-bottom:4px}
+  .score-detail{font-size:12px;color:#555}
+  .stats-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:20px 0}
+  .stat-box{background:#141414;border-radius:10px;padding:14px 8px;text-align:center;border:1px solid #1E1E1E}
+  .stat-num{font-size:26px;font-weight:bold}
+  .stat-lbl{font-size:10px;color:#555;text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+  .unit-bars{margin-bottom:20px}
+  .ubar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .ubar-lbl{font-size:12px;min-width:55px}
+  .ubar-track{flex:1;height:8px;background:#1A1A1A;border-radius:4px;overflow:hidden}
+  .ubar-fill{height:100%;border-radius:4px;transition:width 1s ease}
+  .ubar-score{font-size:11px;color:#555;min-width:70px;text-align:right}
+  .review-title{font-size:11px;color:#555;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px}
+  .review-item{background:rgba(255,82,82,.05);border:1px solid rgba(255,82,82,.15);border-radius:8px;padding:12px;margin-bottom:8px}
+  .review-q{font-size:12px;color:#FF7070;margin-bottom:6px;line-height:1.4}
+  .review-yours{font-size:11px;color:#555;margin-bottom:3px}
+  .review-correct{font-size:11px;color:#69FF47}
+  .restart-btn{background:#00E5FF;color:#000;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:bold;cursor:pointer;letter-spacing:2px;text-transform:uppercase;font-family:'Courier New',monospace;width:100%;margin-top:24px}
+</style>
 </head>
-
 <body>
-    <!-- Login Overlay -->
-    <div id="loginOverlay"
-        style="position:fixed; top:0; left:0; width:100%; height:100%; background: linear-gradient(135deg, rgba(20, 0, 40, 0.95), rgba(75, 0, 130, 0.95)); z-index:9999; display:flex; flex-direction:column; justify-content:center; align-items:center; backdrop-filter: blur(10px); transition: opacity 0.5s ease;">
-        <div
-            style="background: rgba(0,0,0,0.6); padding: 40px; border-radius: 20px; border: 2px solid #ff00ff; box-shadow: 0 0 40px rgba(255,0,255,0.4); text-align: center; max-width: 400px; width: 90%;">
-            <h2 style="font-family: 'Orbitron', sans-serif; color: #00ffff; margin-bottom: 20px; letter-spacing: 2px;">
-                🔒 VIP ACCESS ONLY</h2>
-            <p style="color: #fff; margin-bottom: 25px; line-height: 1.5;">Enter the Secret Invite Code to view the
-                Encore Pass</p>
-            <div style="position: relative; margin-bottom: 15px;">
-                <input type="password" id="secretCode"
-                    style="width: 100%; padding: 15px; border-radius: 10px; border: 2px solid #00ffff; background: rgba(0,0,0,0.5); color: #fff; font-size: 1.1rem; outline: none; transition: all 0.3s; font-family: 'Montserrat', sans-serif;"
-                    placeholder="Secret Code...">
-            </div>
-            <div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 25px;">
-                <input type="checkbox" id="showPassword"
-                    style="margin-right: 10px; width: 18px; height: 18px; accent-color: #ff00ff; cursor: pointer;">
-                <label for="showPassword"
-                    style="color: #00ffff; font-size: 0.95rem; cursor: pointer; font-weight: 600;">Show Password</label>
-            </div>
-            <button id="unlockBtn"
-                style="width: 100%; padding: 15px; background: linear-gradient(45deg, #ff00ff, #00ffff); border: none; border-radius: 10px; color: #000; font-weight: 900; font-size: 1.2rem; cursor: pointer; font-family: 'Orbitron', sans-serif; text-transform: uppercase; transition: all 0.3s; letter-spacing: 3px;">UNLOCK</button>
-            <p id="loginError"
-                style="color: #ff4444; margin-top: 15px; display: none; font-weight: bold; text-shadow: 0 0 10px rgba(255,0,0,0.5);">
-                ❌ Access Denied. Incorrect Code.</p>
-        </div>
-    </div>
-    <div class="container">
-        <div class="logo-section">
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRhYPmlRahOzpAPJtgMhzGeIxZHOYfcHAzE1w&s"
-                alt="Seth M.R. Jaipuria School">
-        </div>
 
-        <h1 class="main-title">ENCORE</h1>
-        <p class="subtitle">After Party - Class of 2025-26</p>
+<!-- ═══ INTRO ═══════════════════════════════════════════════════════════ -->
+<div id="intro">
+  <div class="intro-card">
+    <div class="emoji">🧘</div>
+    <div class="intro-title">YOGA CLASS XII</div>
+    <div class="intro-sub">Board Exam — Objective Test</div>
 
-        <div class="countdown-section">
-            <h2 class="countdown-title">⏳ Event Countdown</h2>
-            <div class="countdown-timer">
-                <div class="countdown-item">
-                    <span class="countdown-value" id="days">00</span>
-                    <span class="countdown-label">Days</span>
-                </div>
-                <div class="countdown-item">
-                    <span class="countdown-value" id="hours">00</span>
-                    <span class="countdown-label">Hours</span>
-                </div>
-                <div class="countdown-item">
-                    <span class="countdown-value" id="minutes">00</span>
-                    <span class="countdown-label">Minutes</span>
-                </div>
-                <div class="countdown-item">
-                    <span class="countdown-value" id="seconds">00</span>
-                    <span class="countdown-label">Seconds</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="event-details">
-            <div class="detail-item">
-                <span class="detail-icon">📅</span>
-                <span class="detail-label">DATE:</span>
-                <span id="eventDateText">1st February 2026</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-icon">⏰</span>
-                <span class="detail-label">TIME:</span>
-                <span id="eventTimeText">5:00 PM Onwards</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-icon">📍</span>
-                <span class="detail-label">VENUE:</span>
-                <span id="eventVenueText">Saras Elysium, 2nd Floor<br>The Grand Arc Hotel & Convention Centre</span>
-            </div>
-        </div>
-
-        <div class="form-section" id="formSection">
-            <h2 class="form-title">ACTIVATE YOUR PASS</h2>
-            <form id="entryForm">
-                <div class="input-group">
-                    <label for="userId">UNIQUE USER ID</label>
-                    <input type="text" id="userId" name="userId" required placeholder="Enter your ID">
-                </div>
-                <div class="input-group">
-                    <label for="fullName">FULL NAME</label>
-                    <input type="text" id="fullName" name="fullName" required placeholder="Enter your full name">
-                </div>
-                <button type="submit" class="activate-btn" id="submitBtn">ACTIVATE PASS</button>
-            </form>
-        </div>
-
-        <div class="verified-screen" id="verifiedScreen">
-            <div class="verified-icon">✓</div>
-            <h2 class="verified-title">ACCESS GRANTED</h2>
-            <p class="verified-text">Your digital entry pass has been successfully verified.</p>
-            <div class="verified-id" id="displayInfo"></div>
-            <p class="verified-text">Your VIP PDF Pass will automatically download in a moment.</p>
-            <button id="downloadPdfBtn" class="activate-btn"
-                style="width: auto; padding: 15px 30px; font-size: 1.1rem; margin-top: 20px; display: inline-block;">
-                📥 DOWNLOAD PASS AGAIN
-            </button>
-            <p class="verified-text" style="color: #00ffff; margin-top: 30px;">See you at Saras Elysium!</p>
-        </div>
-
-        <!-- Hidden PDF template (kept off-screen but rendered so PDF is not blank) -->
-        <div id="pdfTemplateWrapper" style="position:absolute; left:-9999px; top:-9999px; visibility:hidden;">
-            <div id="pdfCard"
-                style="width: 800px; height: 500px; background: #0b001a; position: relative; padding: 40px; color: #fff; font-family: 'Montserrat', sans-serif; border: 4px solid #ff00ff; box-sizing: border-box; overflow: hidden;">
-                <!-- Neon gradient background -->
-                <div
-                    style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(75, 0, 130, 0.4), rgba(0, 0, 0, 1)); z-index: 0;">
-                </div>
-                <!-- Decorative elements -->
-                <div
-                    style="position: absolute; top: -50px; left: -50px; width: 250px; height: 250px; background: #ff00ff; filter: blur(100px); opacity: 0.6; z-index: 0;">
-                </div>
-                <div
-                    style="position: absolute; bottom: -50px; right: -50px; width: 250px; height: 250px; background: #00ffff; filter: blur(100px); opacity: 0.6; z-index: 0;">
-                </div>
-
-                <!-- Content -->
-                <div
-                    style="position: relative; z-index: 1; text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
-                    <div>
-                        <h1
-                            style="font-family: 'Orbitron', sans-serif; font-size: 48px; color: #fff; text-transform: uppercase; letter-spacing: 8px; margin: 0; text-shadow: 0 0 15px #ff00ff;">
-                            ENCORE</h1>
-                        <p
-                            style="font-family: 'Orbitron', sans-serif; font-size: 18px; color: #00ffff; letter-spacing: 4px; margin-top: 5px;">
-                            AFTER PARTY 2026</p>
-                    </div>
-
-                    <div
-                        style="background: rgba(20,0,40,0.6); border: 2px solid #00ffff; border-radius: 15px; padding: 30px; margin: 20px 40px; box-shadow: 0 0 20px rgba(0,255,255,0.2);">
-                        <h2
-                            style="color: #ff00ff; font-family: 'Orbitron', sans-serif; font-size: 22px; margin-bottom: 25px; letter-spacing: 3px;">
-                            OFFICIAL VIP PASS</h2>
-                        <div style="display: flex; justify-content: space-between; text-align: left; padding: 0 20px;">
-                            <div style="flex: 1;">
-                                <p style="font-size: 11px; color: #00ffff; letter-spacing: 2px; margin-bottom: 5px;">
-                                    GUEST NAME</p>
-                                <p id="pdfName"
-                                    style="font-size: 22px; font-weight: bold; margin-bottom: 20px; text-transform: uppercase;">
-                                    JOHN DOE</p>
-
-                                <p style="font-size: 11px; color: #00ffff; letter-spacing: 2px; margin-bottom: 5px;">
-                                    DATE &amp; TIME</p>
-                                <p id="pdfDateTime" style="font-size: 16px; font-weight: bold;">1st Feb 2026 | 5:00 PM</p>
-                            </div>
-                            <div style="flex: 1; text-align: right;">
-                                <p style="font-size: 11px; color: #00ffff; letter-spacing: 2px; margin-bottom: 5px;">
-                                    UNIQUE ID</p>
-                                <p id="pdfId"
-                                    style="font-size: 24px; font-weight: bold; margin-bottom: 20px; font-family: 'Orbitron', sans-serif; color: #ff00ff;">
-                                    #12345</p>
-
-                                <p style="font-size: 11px; color: #00ffff; letter-spacing: 2px; margin-bottom: 5px;">
-                                    VENUE</p>
-                                <p id="pdfVenue" style="font-size: 14px; font-weight: bold;">Saras Elysium, 2nd Floor<br>The Grand Arc
-                                    Hotel</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div style="margin-top: 10px; margin-bottom: 10px;">
-                            <span
-                                style="display: inline-block; padding: 5px 20px; border: 1px solid #ff00ff; border-radius: 20px; font-size: 12px; color: #ff00ff; background: rgba(255,0,255,0.1); margin: 0 10px;">INVITED
-                                GUEST</span>
-                            <span
-                                style="display: inline-block; padding: 5px 20px; border: 1px solid #00ffff; border-radius: 20px; font-size: 12px; color: #00ffff; background: rgba(0,255,255,0.1); margin: 0 10px;">VIP
-                                ACCESS ONLY</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="rules-section">
-            <h2 class="rules-title">EVENT RULES</h2>
-            <div class="rule-item" style="--emoji: '🎟️'">🎟️ Entry only after verification</div>
-            <div class="rule-item" style="--emoji: '🔒'">🔒 Invite-only event</div>
-            <div class="rule-item" style="--emoji: '👗'">👗 Party wear / semi-formal only</div>
-            <div class="rule-item" style="--emoji: '🏨'">🏨 Respect the venue</div>
-            <div class="rule-item" style="--emoji: '😎'">😎 Good vibes only</div>
-            <div class="rule-item" style="--emoji: '🎧'">🎧 Organizer's decision is final</div>
-        </div>
-
-        <div class="action-buttons">
-            <a href="https://maps.app.goo.gl/Pdtvn7YvNHhg8qbX7" target="_blank" class="action-btn maps-btn">
-                <span>📍</span>
-                <span>VENUE LOCATION</span>
-            </a>
-            <a href="https://wa.me/917007520015" target="_blank" class="action-btn whatsapp-btn">
-                <span>💬</span>
-                <span>CONTACT ORGANIZER</span>
-            </a>
-        </div>
+    <div class="filter-row">
+      <button class="filter-btn active-u0" onclick="setFilter(0)">All Units</button>
+      <button class="filter-btn" onclick="setFilter(1)">Unit 1 Only</button>
+      <button class="filter-btn" onclick="setFilter(2)">Unit 2 Only</button>
+      <button class="filter-btn" onclick="setFilter(3)">Unit 3 Only</button>
     </div>
 
-    <script>
-        // Password Protection Logic
-        const MY_PASSWORD = "ENCORE2026";
-        const loginOverlay = document.getElementById('loginOverlay');
-        const secretCodeInput = document.getElementById('secretCode');
-        const showPasswordCheckbox = document.getElementById('showPassword');
-        const unlockBtn = document.getElementById('unlockBtn');
-        const loginError = document.getElementById('loginError');
+    <div class="info-grid">
+      <div class="info-box"><div class="info-num" id="qCount">50</div><div class="info-lbl">Questions</div></div>
+      <div class="info-box"><div class="info-num yellow">50</div><div class="info-lbl">Minutes</div></div>
+      <div class="info-box"><div class="info-num green">1 Mark</div><div class="info-lbl">Each</div></div>
+    </div>
 
-        document.body.classList.add('no-scroll');
+    <div class="hint-txt">
+      Tap an option → Confirm → Next<br/>
+      Jump to any question via dots below<br/>
+      Timer counts down from 50:00
+    </div>
+    <button class="start-btn" onclick="startTest()">START TEST ▶</button>
+  </div>
+</div>
 
-        showPasswordCheckbox.addEventListener('change', function () {
-            secretCodeInput.type = this.checked ? 'text' : 'password';
-        });
+<!-- ═══ TEST ════════════════════════════════════════════════════════════ -->
+<div id="test">
+  <div class="topbar">
+    <div class="logo-sm">🧘 Yoga XII</div>
+    <div class="timer" id="timer">50:00</div>
+  </div>
+  <div class="test-body">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="q-header">
+      <span class="unit-tag u1" id="unitTag">Unit 1</span>
+      <span class="q-num" id="qNum">Q 1 / 50</span>
+    </div>
+    <div class="q-text" id="qText">Question text</div>
+    <div id="options"></div>
+    <div id="feedback" style="display:none"></div>
+    <div class="nav-row">
+      <button class="nav-btn" id="prevBtn" onclick="goPrev()" disabled>◀ PREV</button>
+      <button class="confirm-btn" id="confirmBtn" onclick="confirmAns()" disabled>CONFIRM</button>
+      <button class="next-btn" id="nextBtn" onclick="goNext()" style="display:none">NEXT ▶</button>
+    </div>
+    <div class="dots-wrap">
+      <div class="dots-label">Question Navigator</div>
+      <div class="dots" id="dots"></div>
+      <div class="dot-legend">
+        <span>🟩 Correct</span><span>🟥 Wrong</span><span>⬛ Unanswered</span>
+      </div>
+    </div>
+  </div>
+</div>
 
-        function attemptUnlock() {
-            if (secretCodeInput.value === MY_PASSWORD) {
-                loginOverlay.style.opacity = '0';
-                setTimeout(() => {
-                    loginOverlay.style.display = 'none';
-                    document.body.classList.remove('no-scroll');
-                }, 500);
-            } else {
-                loginError.style.display = 'block';
-                secretCodeInput.style.borderColor = '#ff4444';
-                secretCodeInput.value = '';
-                setTimeout(() => {
-                    secretCodeInput.style.borderColor = '#00ffff';
-                }, 2000);
-            }
-        }
+<!-- ═══ RESULT ══════════════════════════════════════════════════════════ -->
+<div id="result">
+  <div class="result-card">
+    <div class="result-top">
+      <div class="result-label">Test Complete</div>
+      <div class="score-circle" id="scoreCircle">
+        <div class="score-pct" id="scorePct">0%</div>
+        <div class="score-grade" id="scoreGrade">A</div>
+      </div>
+      <div class="score-msg" id="scoreMsg"></div>
+      <div class="score-detail" id="scoreDetail"></div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-box"><div class="stat-num" style="color:#69FF47" id="statCorrect">0</div><div class="stat-lbl">Correct</div></div>
+      <div class="stat-box"><div class="stat-num" style="color:#FF5252" id="statWrong">0</div><div class="stat-lbl">Wrong</div></div>
+      <div class="stat-box"><div class="stat-num" style="color:#FFD740" id="statSkipped">0</div><div class="stat-lbl">Skipped</div></div>
+    </div>
+    <div class="unit-bars" id="unitBars"></div>
+    <div class="review-title">❌ Review Wrong Answers</div>
+    <div id="reviewItems"></div>
+    <button class="restart-btn" onclick="restart()">TRY AGAIN ↺</button>
+  </div>
+</div>
 
-        unlockBtn.addEventListener('click', attemptUnlock);
-        secretCodeInput.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') attemptUnlock();
-        });
+<script>
+const ALL_QUESTIONS = [
+  // ── UNIT 1 ──────────────────────────────────────────────
+  {id:1,unit:1,q:"What does the word 'Shat' mean in Shatkarma?",opts:["Pure","Six","Clean","Energy"],ans:1},
+  {id:2,unit:1,q:"Kapalabhati involves which primary action?",opts:["Forceful inhalation","Breath retention","Forceful exhalation","Alternate nostril breathing"],ans:2},
+  {id:3,unit:1,q:"In Trataka, you gaze at a flame without blinking until:",opts:["You fall asleep","Tears start to flow","The flame goes out","You feel dizzy"],ans:1},
+  {id:4,unit:1,q:"Jala Neti uses which type of water?",opts:["Cold water","Boiling water","Tepid (lukewarm) saline water","Plain tap water"],ans:2},
+  {id:5,unit:1,q:"Nauli is a cleansing practice for which body part?",opts:["Nasal passages","Eyes","Abdominal muscles","Throat"],ans:2},
+  {id:6,unit:1,q:"What does 'Sthiram Sukham Asanam' mean?",opts:["Breathe and relax","A position that is comfortable and steady","Sit and meditate","Move slowly"],ans:1},
+  {id:7,unit:1,q:"Which is the correct order of yogic practice?",opts:["Asana → Pranayama → Shatkarma","Pranayama → Shatkarma → Asana","Shatkarma → Asana → Pranayama","Dhyana → Asana → Pranayama"],ans:2},
+  {id:8,unit:1,q:"How long should a healthy person ideally practice asanas daily?",opts:["15 minutes","30 minutes","45 minutes","60 minutes"],ans:2},
+  {id:9,unit:1,q:"Pranayama is best practiced in which season to begin?",opts:["Summer (June–July)","Winter (Dec–Jan)","Spring (March–April) and Autumn (Sept–Oct)","Monsoon (July–Aug)"],ans:2},
+  {id:10,unit:1,q:"Which pranayama is known as the 'humming bee breath'?",opts:["Ujjayi","Bhramari","Sheetali","Suryabhedana"],ans:1},
+  {id:11,unit:1,q:"The three components of Pranayama in correct order are:",opts:["Kumbhaka → Puraka → Rechaka","Puraka → Kumbhaka → Rechaka","Rechaka → Puraka → Kumbhaka","Puraka → Rechaka → Kumbhaka"],ans:1},
+  {id:12,unit:1,q:"Mindfulness Meditation is best described as:",opts:["Chanting mantras loudly","Focusing on a single candle","Being aware of sounds and activities with a fluid mind","Communicating with God through prayer"],ans:2},
+  {id:13,unit:1,q:"Women in the first 3 months of pregnancy should avoid asanas that create:",opts:["Neck pressure","Abdominal pressure","Spinal extension","Leg strain"],ans:1},
+  {id:14,unit:1,q:"Which Shatkarma cleanses the entire alimentary canal from mouth to rectum?",opts:["Neti","Nauli","Trataka","Dhauti"],ans:3},
+  {id:15,unit:1,q:"Supine line asanas are practiced in which position?",opts:["Standing","Lying on stomach","Lying on back","Sitting"],ans:2},
+  {id:16,unit:1,q:"Which Shatkarma is described as 'colon cleaning'?",opts:["Nauli","Dhauti","Basti","Neti"],ans:2},
+  {id:17,unit:1,q:"The best time to practice asanas is:",opts:["After lunch","Late evening","Early morning","Midnight"],ans:2},
 
-        // Form Submit and PDF Generation
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyPMcvNbwuS1_oVZk94HF84oIbxn_xh2d70b1lINcq26sHIVHJEfV-tJwDP13229YAN/exec";
+  // ── UNIT 2 ──────────────────────────────────────────────
+  {id:18,unit:2,q:"According to the Bhagavad Gita, which diet promotes longevity and mental clarity?",opts:["Rajasic","Tamasic","Sattvic","Mixed"],ans:2},
+  {id:19,unit:2,q:"The Mitahara rule says the stomach should be filled with food up to:",opts:["One-quarter","One-third","Half","Three-quarters"],ans:2},
+  {id:20,unit:2,q:"In Hatha Yoga, 'Ha' stands for:",opts:["Mental force","Prana Shakti (life force)","Solar energy only","Breathing technique"],ans:1},
+  {id:21,unit:2,q:"Rajasic food items include:",opts:["Fresh fruits and milk","Whole grains and pulses","Tea, coffee, and spicy food","Honey and ghee"],ans:2},
+  {id:22,unit:2,q:"Patanjali's yoga sutras begin with the concept of:",opts:["Ahimsa Paramo Dharma","Yogah Karmasu Kausalam","Chitta Vritti Nirodhah","Samatvam Yoga Uchate"],ans:2},
+  {id:23,unit:2,q:"The four qualities for Chitta Prasadana include Maitri, Karuna, Mudita, and:",opts:["Ahimsa","Upeksha","Tapas","Satya"],ans:1},
+  {id:24,unit:2,q:"Kriya Yoga according to Patanjali consists of Tapas, Swadhyaya, and:",opts:["Dhyana","Samadhi","Ishwarapranidhana","Pratyahara"],ans:2},
+  {id:25,unit:2,q:"Which of the following is NOT a Yama?",opts:["Ahimsa","Satya","Santosha","Asteya"],ans:2},
+  {id:26,unit:2,q:"The first five limbs of Ashtanga Yoga form:",opts:["Antaranga Yoga","Bahiranga Yoga","Kriya Yoga","Hatha Yoga"],ans:1},
+  {id:27,unit:2,q:"The Bhagavad Gita contains how many chapters?",opts:["12","14","18","21"],ans:2},
+  {id:28,unit:2,q:"'Yogah Karmasu Kausalam' means:",opts:["Yoga is equanimity of mind","Yoga is skill in action","Yoga is union of forces","Yoga is knowledge of self"],ans:1},
+  {id:29,unit:2,q:"Samadhi is described as:",opts:["Perfect concentration on one object","Withdrawal of senses","Total absorption where self-awareness disappears","Uninterrupted flow of mind"],ans:2},
+  {id:30,unit:2,q:"Tamasic food causes:",opts:["Mental clarity and energy","Spiritual awakening","Exhaustion, laziness, and chronic depression","Irritability and anger"],ans:2},
+  {id:31,unit:2,q:"Jalandhara Bandha specifically regulates which gland?",opts:["Adrenal gland","Thyroid and parathyroid glands","Pineal gland","Pituitary gland"],ans:1},
+  {id:32,unit:2,q:"Pratyahara means:",opts:["Concentration on one object","Breath control","Withdrawal of senses from their objects","State of total absorption"],ans:2},
+  {id:33,unit:2,q:"The Bhagavad Gita is part of which epic?",opts:["Ramayana","Mahabharata","Bhagavata Purana","Rig Veda"],ans:1},
+  {id:34,unit:2,q:"Karma Yoga emphasizes:",opts:["Devotion to God","Work done without attachment to results","Study of sacred texts","Physical postures"],ans:1},
 
-        // Minimal invitation card PDF using jsPDF (creative blocks layout)
-        function downloadInvitationPDF(userId, fullName) {
-            const { jsPDF } = window.jspdf;
-            const safeName = (fullName || "").trim() || "Guest";
-            const safeId = (userId || "").trim() || "—";
+  // ── UNIT 3 ──────────────────────────────────────────────
+  {id:35,unit:3,q:"What does CPR stand for?",opts:["Cardiac Pressure Resuscitation","Cardiopulmonary Resuscitation","Central Pulse Restoration","Chest Pressure Revival"],ans:1},
+  {id:36,unit:3,q:"The correct CPR order for adults is:",opts:["ABC (Airway → Breathing → Compressions)","BAC (Breathing → Airway → Compressions)","CAB (Compressions → Airway → Breathing)","ACB (Airway → Compressions → Breathing)"],ans:2},
+  {id:37,unit:3,q:"Chest compression depth for adults in CPR is approximately:",opts:["2 cm","4 cm","5 cm (2 inches)","8 cm"],ans:2},
+  {id:38,unit:3,q:"The compression to breath ratio in CPR for adults is:",opts:["15:1","20:2","30:2","10:1"],ans:2},
+  {id:39,unit:3,q:"Without CPR, brain damage can begin within:",opts:["30 seconds","A few minutes","10 minutes","1 hour"],ans:1},
+  {id:40,unit:3,q:"Obesity is defined as BMI of:",opts:["≥ 25 kg/m²","≥ 27 kg/m²","≥ 30 kg/m²","≥ 35 kg/m²"],ans:2},
+  {id:41,unit:3,q:"Hypertension is defined when systolic BP is above:",opts:["120 mmHg","130 mmHg","140 mmHg","160 mmHg"],ans:2},
+  {id:42,unit:3,q:"Bronchial Asthma is a disease of the:",opts:["Digestive system","Nervous system","Respiratory system","Endocrine system"],ans:2},
+  {id:43,unit:3,q:"Chronic low back pain is measured as pain lasting more than:",opts:["1 month","2 months","3 months","6 months"],ans:2},
+  {id:44,unit:3,q:"Which asana is specifically beneficial for diabetes by increasing insulin?",opts:["Bhujangasana","Mandukasana","Halasana","Trikonasana"],ans:1},
+  {id:45,unit:3,q:"Good stress (Eustress) is characterized by:",opts:["Anxiety and tension","Decreased performance","Motivation and improved performance","Mental and physical problems"],ans:2},
+  {id:46,unit:3,q:"Which Pranayama is contraindicated for Hypertension?",opts:["Ujjayi","Bhramari","Hyperventilation breathing practices","Nadishodhana"],ans:2},
+  {id:47,unit:3,q:"The outermost kosha (sheath) in Pancha Kosha theory is:",opts:["Pranamaya Kosha","Manomaya Kosha","Annamaya Kosha","Anandamaya Kosha"],ans:2},
+  {id:48,unit:3,q:"'Ahimsa Paramo Dharma' refers to which dimension of health?",opts:["Physical health","Mental health","Social health","Spiritual health"],ans:3},
+  {id:49,unit:3,q:"Surya Namaskar consists of how many poses?",opts:["8","10","12","16"],ans:2},
+  {id:50,unit:3,q:"For infant CPR, compressions are done with:",opts:["Both hands","One hand","Two fingers (index and middle)","Palm heel only"],ans:2},
+];
 
-            const dateText = document.getElementById('eventDateText')?.textContent || '1st February 2026';
-            const timeText = document.getElementById('eventTimeText')?.textContent || '5:00 PM Onwards';
-            const venueNode = document.getElementById('eventVenueText');
-            const venueText = venueNode
-                ? venueNode.textContent.replace(/\s+/g, " ").trim()
-                : 'Saras Elysium, 2nd Floor • The Grand Arc Hotel & Convention Centre';
+const UNIT_ACCENT = {1:"#00E5FF", 2:"#FFD740", 3:"#69FF47"};
+let questions=[], current=0, answers={}, selected=null, confirmed=false;
+let timeLeft=50*60, timerInterval=null, activeFilter=0;
 
-            // Landscape A5 for a card-like feel
-            const doc = new jsPDF({ orientation: "l", unit: "pt", format: "a5" });
-            const pageW = doc.internal.pageSize.getWidth();
-            const pageH = doc.internal.pageSize.getHeight();
+function setFilter(f){
+  activeFilter=f;
+  document.querySelectorAll('.filter-btn').forEach((b,i)=>{
+    b.className='filter-btn'+(i===f?' active-u'+f:'');
+  });
+  const fl = f===0 ? ALL_QUESTIONS : ALL_QUESTIONS.filter(q=>q.unit===f);
+  document.getElementById('qCount').textContent=fl.length;
+}
 
-            // Full background with subtle vignette
-            doc.setFillColor(7, 0, 30);
-            doc.rect(0, 0, pageW, pageH, "F");
+function startTest(){
+  questions = activeFilter===0 ? ALL_QUESTIONS : ALL_QUESTIONS.filter(q=>q.unit===activeFilter);
+  answers={}; current=0; selected=null; confirmed=false; timeLeft=50*60;
+  document.getElementById('intro').style.display='none';
+  document.getElementById('test').style.display='flex';
+  buildDots();
+  renderQ();
+  timerInterval=setInterval(()=>{
+    timeLeft--;
+    updateTimer();
+    if(timeLeft<=0){clearInterval(timerInterval);showResult();}
+  },1000);
+}
 
-            // Glow strips
-            doc.setFillColor(255, 0, 255);
-            doc.rect(0, 0, pageW, 6, "F");
-            doc.setFillColor(0, 255, 255);
-            doc.rect(0, pageH - 6, pageW, 6, "F");
+function updateTimer(){
+  const m=String(Math.floor(timeLeft/60)).padStart(2,'0');
+  const s=String(timeLeft%60).padStart(2,'0');
+  const el=document.getElementById('timer');
+  el.textContent=m+':'+s;
+  el.className='timer'+(timeLeft<120?' danger':timeLeft<300?' warn':'');
+}
 
-            // Inner card container
-            const cardMarginX = 28;
-            const cardMarginY = 24;
-            const cardW = pageW - cardMarginX * 2;
-            const cardH = pageH - cardMarginY * 2;
+function renderQ(){
+  const q=questions[current];
+  const acc=UNIT_ACCENT[q.unit];
+  document.getElementById('progressFill').style.width=((current+1)/questions.length*100)+'%';
+  const tag=document.getElementById('unitTag');
+  tag.textContent='Unit '+q.unit;
+  tag.className='unit-tag u'+q.unit;
+  const answered=Object.keys(answers).length;
+  document.getElementById('qNum').textContent='Q '+(current+1)+' / '+questions.length+' · '+answered+' answered';
+  document.getElementById('qText').textContent=q.q;
 
-            doc.setFillColor(12, 0, 45);
-            doc.roundedRect(cardMarginX, cardMarginY, cardW, cardH, 16, 16, "F");
-            doc.setDrawColor(255, 0, 255);
-            doc.setLineWidth(1.3);
-            doc.roundedRect(cardMarginX, cardMarginY, cardW, cardH, 16, 16, "S");
+  // options
+  const oDiv=document.getElementById('options');
+  oDiv.innerHTML='';
+  q.opts.forEach((opt,i)=>{
+    const d=document.createElement('div');
+    d.className='opt';
+    d.innerHTML=`<div class="opt-label">${String.fromCharCode(65+i)}</div><div>${opt}</div>`;
+    if(confirmed){
+      if(i===q.ans) d.classList.add('correct');
+      else if(i===selected&&i!==q.ans) d.classList.add('wrong');
+      else d.classList.add('dimmed');
+    } else if(i===selected){
+      d.classList.add('selected');
+      if(q.unit===2) d.classList.add('u2');
+      if(q.unit===3) d.classList.add('u3');
+    }
+    if(!confirmed) d.onclick=()=>selectOpt(i);
+    oDiv.appendChild(d);
+  });
 
-            // Header
-            const centerX = pageW / 2;
-            let y = cardMarginY + 40;
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(28);
-            doc.setTextColor(255, 255, 255);
-            doc.text("ENCORE", centerX, y, { align: "center" });
+  // feedback
+  const fb=document.getElementById('feedback');
+  if(confirmed){
+    fb.style.display='block';
+    const ok=selected===q.ans;
+    fb.className='feedback '+(ok?'correct':'wrong');
+    fb.textContent=ok?'✓ Correct!':`✗ Wrong — Correct: (${String.fromCharCode(65+q.ans)}) ${q.opts[q.ans]}`;
+  } else fb.style.display='none';
 
-            y += 20;
-            doc.setFontSize(11);
-            doc.setTextColor(0, 255, 255);
-            doc.text("AFTER PARTY • CLASS OF 2025–26", centerX, y, { align: "center" });
+  // buttons
+  document.getElementById('prevBtn').disabled=current===0;
+  const confirmBtn=document.getElementById('confirmBtn');
+  const nextBtn=document.getElementById('nextBtn');
+  if(confirmed){
+    confirmBtn.style.display='none';
+    nextBtn.style.display='block';
+    nextBtn.textContent=current<questions.length-1?'NEXT ▶':'FINISH 🏁';
+  } else {
+    confirmBtn.style.display='block';
+    nextBtn.style.display='none';
+    confirmBtn.disabled=selected===null;
+    confirmBtn.className='confirm-btn'+(q.unit===2?' u2':q.unit===3?' u3':'');
+  }
+  updateDots();
+}
 
-            // --------------------------
-            // Guest block (full-width)
-            // --------------------------
-            const blockMarginX = cardMarginX + 32;
-            y += 26;
+function selectOpt(i){
+  if(confirmed)return;
+  selected=i;
+  renderQ();
+}
 
-            const guestBlockY = y;
-            const guestBlockH = 70;
-            const guestBlockW = cardW - 64;
+function confirmAns(){
+  if(selected===null||confirmed)return;
+  confirmed=true;
+  const q=questions[current];
+  answers[q.id]=selected;
+  renderQ();
+}
 
-            doc.setFillColor(18, 0, 65);
-            doc.roundedRect(blockMarginX, guestBlockY, guestBlockW, guestBlockH, 12, 12, "F");
-            doc.setDrawColor(0, 255, 255);
-            doc.setLineWidth(0.9);
-            doc.roundedRect(blockMarginX, guestBlockY, guestBlockW, guestBlockH, 12, 12, "S");
+function goNext(){
+  if(current<questions.length-1){
+    current++;
+    const q=questions[current];
+    if(answers[q.id]!==undefined){selected=answers[q.id];confirmed=true;}
+    else{selected=null;confirmed=false;}
+    renderQ();
+  } else {
+    clearInterval(timerInterval);
+    showResult();
+  }
+}
 
-            // Name label + value
-            let innerX = blockMarginX + 18;
-            let innerY = guestBlockY + 24;
-            doc.setFontSize(9.5);
-            doc.setTextColor(0, 255, 255);
-            doc.text("GUEST NAME", innerX, innerY);
-            doc.setFontSize(17);
-            doc.setTextColor(255, 255, 255);
-            doc.text(safeName.toUpperCase(), innerX, innerY + 20, { maxWidth: guestBlockW - 36 });
+function goPrev(){
+  if(current>0){
+    current--;
+    const q=questions[current];
+    if(answers[q.id]!==undefined){selected=answers[q.id];confirmed=true;}
+    else{selected=null;confirmed=false;}
+    renderQ();
+  }
+}
 
-            // ID label + value aligned to right inside block
-            const idX = blockMarginX + guestBlockW - 18;
-            doc.setFontSize(9.5);
-            doc.setTextColor(0, 255, 255);
-            doc.text("UNIQUE ID", idX, innerY, { align: "right" });
-            doc.setFontSize(14);
-            doc.setTextColor(255, 0, 255);
-            doc.text("#" + safeId, idX, innerY + 20, { align: "right" });
+function buildDots(){
+  const dotsDiv=document.getElementById('dots');
+  dotsDiv.innerHTML='';
+  questions.forEach((_,i)=>{
+    const d=document.createElement('div');
+    d.className='dot';
+    d.textContent=i+1;
+    d.onclick=()=>jumpTo(i);
+    dotsDiv.appendChild(d);
+  });
+}
 
-            // --------------------------
-            // Bottom row: Date/Time block + Venue block
-            // --------------------------
-            const rowY = guestBlockY + guestBlockH + 26;
-            const rowH = 86;
-            const gap = 18;
-            const halfW = (guestBlockW - gap) / 2;
+function updateDots(){
+  const dots=document.querySelectorAll('.dot');
+  dots.forEach((d,i)=>{
+    const q=questions[i];
+    d.className='dot';
+    if(i===current) d.classList.add('current');
+    if(answers[q.id]!==undefined){
+      d.classList.add(answers[q.id]===q.ans?'correct':'wrong');
+    }
+  });
+}
 
-            // Date & time block
-            const dateX = blockMarginX;
-            doc.setFillColor(15, 0, 55);
-            doc.roundedRect(dateX, rowY, halfW, rowH, 12, 12, "F");
-            doc.setDrawColor(0, 255, 255);
-            doc.setLineWidth(0.9);
-            doc.roundedRect(dateX, rowY, halfW, rowH, 12, 12, "S");
+function jumpTo(i){
+  current=i;
+  const q=questions[i];
+  if(answers[q.id]!==undefined){selected=answers[q.id];confirmed=true;}
+  else{selected=null;confirmed=false;}
+  renderQ();
+}
 
-            innerX = dateX + 16;
-            innerY = rowY + 24;
-            doc.setFontSize(9.5);
-            doc.setTextColor(0, 255, 255);
-            doc.text("DATE & TIME", innerX, innerY);
-            doc.setFontSize(12);
-            doc.setTextColor(255, 255, 255);
-            doc.text(dateText, innerX, innerY + 16);
-            doc.text(timeText, innerX, innerY + 32);
+function showResult(){
+  clearInterval(timerInterval);
+  document.getElementById('test').style.display='none';
+  document.getElementById('result').style.display='flex';
 
-            // Venue block
-            const venueX = dateX + halfW + gap;
-            doc.setFillColor(15, 0, 55);
-            doc.roundedRect(venueX, rowY, halfW, rowH, 12, 12, "F");
-            doc.setDrawColor(255, 0, 255);
-            doc.setLineWidth(0.9);
-            doc.roundedRect(venueX, rowY, halfW, rowH, 12, 12, "S");
+  const score=questions.filter(q=>answers[q.id]===q.ans).length;
+  const total=questions.length;
+  const pct=Math.round(score/total*100);
+  const unanswered=questions.filter(q=>answers[q.id]===undefined).length;
+  const wrong=total-score-unanswered;
 
-            innerX = venueX + 16;
-            innerY = rowY + 24;
-            doc.setFontSize(9.5);
-            doc.setTextColor(255, 0, 255);
-            doc.text("VENUE", innerX, innerY);
-            doc.setFontSize(11);
-            doc.setTextColor(255, 255, 255);
-            const wrappedVenue = doc.splitTextToSize(venueText, halfW - 26);
-            doc.text(wrappedVenue, innerX, innerY + 16);
+  const grade=pct>=90?'A+':pct>=75?'A':pct>=60?'B':pct>=45?'C':'D';
+  const msg=pct>=90?'Outstanding! You\'re ready! 🏆':pct>=75?'Excellent work! 🌟':pct>=60?'Good effort! Keep revising 📖':pct>=45?'Needs more revision ✏️':'Review all units again 🙏';
 
-            // Bottom chips
-            const chipY = cardMarginY + cardH - 26;
-            doc.setFontSize(9);
+  document.getElementById('scorePct').textContent=pct+'%';
+  document.getElementById('scoreGrade').textContent=grade;
+  document.getElementById('scoreGrade').style.color=pct>=75?'#69FF47':pct>=50?'#FFD740':'#FF5252';
+  document.getElementById('scoreMsg').textContent=msg;
+  document.getElementById('scoreDetail').textContent=score+' correct out of '+total+' questions';
 
-            doc.setDrawColor(255, 0, 255);
-            doc.setTextColor(255, 0, 255);
-            doc.roundedRect(cardMarginX + 40, chipY - 14, 90, 22, 10, 10, "S");
-            doc.text("INVITED GUEST", cardMarginX + 85, chipY, { align: "center" });
+  const circle=document.getElementById('scoreCircle');
+  circle.className='score-circle'+(pct>=75?'':pct>=50?' avg':' low');
+  circle.style.borderColor=pct>=75?'#69FF47':pct>=50?'#FFD740':'#FF5252';
 
-            doc.setDrawColor(0, 255, 255);
-            doc.setTextColor(0, 255, 255);
-            const chip2X = cardMarginX + 40 + 110;
-            doc.roundedRect(chip2X, chipY - 14, 110, 22, 10, 10, "S");
-            doc.text("VIP ACCESS ONLY", chip2X + 55, chipY, { align: "center" });
+  document.getElementById('statCorrect').textContent=score;
+  document.getElementById('statWrong').textContent=wrong;
+  document.getElementById('statSkipped').textContent=unanswered;
 
-            // Footer note
-            doc.setFontSize(8.5);
-            doc.setTextColor(155, 155, 175);
-            doc.text("Please carry this digital invitation for entry • Invite-only", centerX, pageH - 18, { align: "center" });
+  // unit bars
+  const ubDiv=document.getElementById('unitBars');
+  ubDiv.innerHTML='';
+  [1,2,3].forEach(u=>{
+    const uQs=questions.filter(q=>q.unit===u);
+    if(!uQs.length)return;
+    const uScore=uQs.filter(q=>answers[q.id]===q.ans).length;
+    const uPct=Math.round(uScore/uQs.length*100);
+    const acc=UNIT_ACCENT[u];
+    ubDiv.innerHTML+=`<div class="ubar-row">
+      <div class="ubar-lbl" style="color:${acc}">Unit ${u}</div>
+      <div class="ubar-track"><div class="ubar-fill" style="width:${uPct}%;background:${acc}"></div></div>
+      <div class="ubar-score">${uScore}/${uQs.length} (${uPct}%)</div>
+    </div>`;
+  });
 
-            const filename = `Encore_VIP_Pass_${safeName.replace(/\s+/g, "_")}.pdf`;
-            doc.save(filename);
-        }
+  // wrong review
+  const rvDiv=document.getElementById('reviewItems');
+  rvDiv.innerHTML='';
+  const wrongQs=questions.filter(q=>answers[q.id]!==undefined&&answers[q.id]!==q.ans);
+  if(!wrongQs.length){rvDiv.innerHTML='<div style="font-size:13px;color:#555;margin-bottom:16px">No wrong answers! Perfect! 🎉</div>';return;}
+  wrongQs.forEach(q=>{
+    const yours=answers[q.id]!==undefined?`(${String.fromCharCode(65+answers[q.id])}) ${q.opts[answers[q.id]]}`:'Not answered';
+    rvDiv.innerHTML+=`<div class="review-item">
+      <div class="review-q">Q${q.id}. ${q.q}</div>
+      <div class="review-yours">Your answer: <span style="color:#FF7070">${yours}</span></div>
+      <div class="review-correct">✓ Correct: <b>(${String.fromCharCode(65+q.ans)}) ${q.opts[q.ans]}</b></div>
+    </div>`;
+  });
+}
 
-        // Countdown Timer
-        function updateCountdown() {
-            const eventDate = new Date("February 1, 2026 17:00:00").getTime();
-            const now = new Date().getTime();
-            const distance = eventDate - now;
-
-            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-            document.getElementById("days").textContent = String(days).padStart(2, '0');
-            document.getElementById("hours").textContent = String(hours).padStart(2, '0');
-            document.getElementById("minutes").textContent = String(minutes).padStart(2, '0');
-            document.getElementById("seconds").textContent = String(seconds).padStart(2, '0');
-
-            if (distance < 0) {
-                document.querySelector(".countdown-title").textContent = "🎉 EVENT IS LIVE!";
-                document.getElementById("days").textContent = "00";
-                document.getElementById("hours").textContent = "00";
-                document.getElementById("minutes").textContent = "00";
-                document.getElementById("seconds").textContent = "00";
-            }
-        }
-
-        updateCountdown();
-        setInterval(updateCountdown, 1000);
-
-        function createConfetti() {
-            const colors = ["#ff00ff", "#00ffff", "#ff0080", "#00ff80", "#ffff00"];
-            for (let i = 0; i < 100; i++) {
-                const confetti = document.createElement("div");
-                confetti.className = "confetti";
-                confetti.style.left = Math.random() * 100 + "vw";
-                confetti.style.animationDelay = Math.random() * 3 + "s";
-                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                confetti.style.width = Math.random() * 10 + 5 + "px";
-                confetti.style.height = Math.random() * 10 + 5 + "px";
-                document.body.appendChild(confetti);
-
-                setTimeout(function () {
-                    confetti.remove();
-                }, 3000);
-            }
-        }
-
-        window.addEventListener("load", createConfetti);
-
-        // Download again button
-        document.getElementById("downloadPdfBtn").addEventListener("click", function () {
-            const userId = document.getElementById("userId")?.value || "";
-            const fullName = document.getElementById("fullName")?.value || "";
-            downloadInvitationPDF(String(userId).trim(), String(fullName).trim());
-        });
-
-        document.getElementById("entryForm").addEventListener("submit", function (e) {
-            e.preventDefault();
-
-            const userId = document.getElementById("userId").value.trim();
-            const fullName = document.getElementById("fullName").value.trim();
-            const submitBtn = document.getElementById("submitBtn");
-
-            if (!userId || !fullName) {
-                alert("Please fill in all fields!");
-                return;
-            }
-
-            submitBtn.textContent = "PROCESSING...";
-            submitBtn.disabled = true;
-
-            const formData = new FormData();
-            formData.append("userId", userId);
-            formData.append("fullName", fullName);
-
-            fetch(SCRIPT_URL, {
-                method: "POST",
-                body: formData,
-                mode: "no-cors"
-            })
-                .then(function () {
-                    console.log("Form submitted successfully");
-
-                    document.getElementById("formSection").style.display = "none";
-                    document.getElementById("verifiedScreen").classList.add("active");
-                    document.getElementById("displayInfo").innerHTML =
-                        "<strong>ID:</strong> " + userId + "<br><strong>NAME:</strong> " + fullName;
-
-                    createConfetti();
-
-                    // Trigger PDF download based on credentials + party details
-                    setTimeout(() => {
-                        downloadInvitationPDF(userId, fullName);
-                    }, 800);
-
-                    document.getElementById('downloadPdfBtn').onclick = () => {
-                        downloadInvitationPDF(userId, fullName);
-                    };
-
-                    setTimeout(function () {
-                        document.getElementById("verifiedScreen").scrollIntoView({ behavior: "smooth" });
-                    }, 100);
-
-                })
-                .catch(function (error) {
-                    console.error("Error:", error);
-                    alert("Submission failed. Please check your internet connection and try again.");
-                    submitBtn.textContent = "ACTIVATE PASS";
-                    submitBtn.disabled = false;
-                });
-        });
-    </script>
+function restart(){
+  document.getElementById('result').style.display='none';
+  document.getElementById('intro').style.display='flex';
+  document.getElementById('intro').style.flexDirection='column';
+  document.getElementById('intro').style.alignItems='center';
+}
+</script>
 </body>
-
 </html>
